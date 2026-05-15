@@ -4,6 +4,8 @@ import { Wallet, ArrowUpRight, History, Download, Clock, CheckCircle2, Loader2, 
 import api from '../lib/api';
 import WithdrawModal from '../components/WithdrawModal';
 import LoadingScreen from '../components/LoadingScreen';
+import { supabase } from '../lib/supabase';
+import { auth } from '../lib/firebase';
 
 const Payouts = () => {
   const [loading, setLoading] = useState(true);
@@ -17,19 +19,44 @@ const Payouts = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    try {
-      const response = await api.get('/payouts/list');
-      const list = response.data.payouts;
-      setPayouts(list);
+    const user = auth.currentUser;
+    if (!user) return;
 
-      // Calculate simple stats
-      const pending = list.filter(p => p.status === 'Pending').reduce((acc, p) => acc + p.amount, 0);
-      const successful = list.filter(p => p.status === 'Paid');
+    try {
+      // 1. Fetch Payouts
+      const { data: payoutList, error: pError } = await supabase
+        .from('payouts')
+        .select('*')
+        .eq('merchant_id', user.uid)
+        .order('created_at', { ascending: false });
+
+      if (pError) throw pError;
+      setPayouts(payoutList || []);
+
+      // 2. Fetch Completed Transactions to calculate balance
+      const { data: transactions, error: tError } = await supabase
+        .from('transactions')
+        .select('amount')
+        .eq('merchant_id', user.uid)
+        .eq('status', 'Completed');
+
+      if (tError) throw tError;
+
+      // 3. Calculate Stats
+      const totalRevenue = (transactions || []).reduce((acc, t) => acc + t.amount, 0);
+      const totalPaidPayouts = (payoutList || [])
+        .filter(p => p.status === 'Paid')
+        .reduce((acc, p) => acc + p.amount, 0);
+      
+      const pending = (payoutList || [])
+        .filter(p => p.status === 'Pending')
+        .reduce((acc, p) => acc + p.amount, 0);
+      
+      const successful = (payoutList || []).filter(p => p.status === 'Paid');
       const last = successful.length > 0 ? successful[0].amount : 0;
 
-      // In real app, fetch real balance from a ledger table
       setStats({
-        available: 25400.00, // Mock available balance
+        available: Math.max(0, totalRevenue - totalPaidPayouts - pending),
         lastPayout: last,
         pending: pending
       });

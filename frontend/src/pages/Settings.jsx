@@ -54,6 +54,8 @@ const Settings = () => {
   }, []);
 
   // 2. Auto-lookup bank name from IFSC
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
+
   useEffect(() => {
     const code = bankData.ifscCode.toUpperCase();
     if (code.length === 11) {
@@ -63,7 +65,11 @@ const Settings = () => {
           if (res.ok) {
             const data = await res.json();
             setBankData(prev => ({ ...prev, bankName: data.BANK }));
-            showToast(`Auto-detected: ${data.BANK}`, 'success');
+            
+            // Only show toast if this isn't the first time we're loading the saved data
+            if (initialLoadDone) {
+              showToast(`Auto-detected: ${data.BANK}`, 'success');
+            }
           }
         } catch (err) {
           console.error('IFSC Lookup failed');
@@ -72,6 +78,14 @@ const Settings = () => {
       fetchBankInfo();
     }
   }, [bankData.ifscCode]);
+
+  // Set initialLoadDone to true after the first fetch from database is complete
+  useEffect(() => {
+    if (!fetching) {
+      // Small delay to ensure the IFSC lookup effect has run for the initial data
+      setTimeout(() => setInitialLoadDone(true), 1000);
+    }
+  }, [fetching]);
 
   // 3. Save to Supabase
   const handleSave = async (e) => {
