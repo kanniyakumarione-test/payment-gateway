@@ -5,6 +5,7 @@ import { Heart, Calendar, Clock, MapPin, User, Phone, Sparkles, Loader2, Chevron
 import { supabase } from '../lib/supabase';
 import { auth } from '../lib/firebase';
 import { useToast } from '../context/ToastContext';
+import Cropper from 'react-easy-crop';
 
 const CreateEvent = () => {
   const navigate = useNavigate();
@@ -18,6 +19,14 @@ const CreateEvent = () => {
   const venueMarker = useRef(null);
   const currentMarker = useRef(null);
   const tileLayer = useRef(null);
+
+  // Cropper States
+  const [imageToCrop, setImageToCrop] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [pendingImageBlob, setPendingImageBlob] = useState(null);
+  const [pendingImagePreview, setPendingImagePreview] = useState('');
 
   const [formData, setFormData] = useState({
     type: 'Wedding',
@@ -110,84 +119,75 @@ const CreateEvent = () => {
     }
   };
 
-  const handleImageUpload = async (e) => {
+  const handleImageSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    setUploadingImage(true);
-    
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      setImageToCrop(reader.result);
+    };
+  };
+
+  const createCropCanvas = (imageSrc, cropPixels) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = imageSrc;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = cropPixels.width;
+        canvas.height = cropPixels.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(
+          img,
+          cropPixels.x,
+          cropPixels.y,
+          cropPixels.width,
+          cropPixels.height,
+          0,
+          0,
+          cropPixels.width,
+          cropPixels.height
+        );
+        // Heavy compression to save bandwidth
+        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.6);
+      };
+      img.onerror = (err) => reject(err);
+    });
+  };
+
+  const handleSaveCrop = async () => {
+    if (!imageToCrop || !croppedAreaPixels) return;
+    try {
+      const blob = await createCropCanvas(imageToCrop, croppedAreaPixels);
+      setPendingImageBlob(blob);
+      setPendingImagePreview(URL.createObjectURL(blob));
+      setImageToCrop(null); // Close cropper modal
+    } catch (e) {
+      showToast('Crop failed', 'error');
+    }
+  };
+
+  const uploadToCloudinary = async (blob) => {
     const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME; 
     const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
     
     if (!CLOUD_NAME || !UPLOAD_PRESET) {
-      showToast('Please add VITE_CLOUDINARY keys to your .env file', 'error');
-      setUploadingImage(false);
-      return;
+      throw new Error('Please add VITE_CLOUDINARY keys to your .env file');
     }
 
-    try {
-      showToast('Compressing image... ⏳');
-      // Compress Image using Canvas
-      const compressedBlob = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (event) => {
-          const img = new Image();
-          img.src = event.target.result;
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 1080; // Aggressive resize for 50-100kb
-            const MAX_HEIGHT = 1080;
-            let width = img.width;
-            let height = img.height;
+    const data = new FormData();
+    data.append('file', blob, 'hero_image.jpg');
+    data.append('upload_preset', UPLOAD_PRESET);
 
-            if (width > height) {
-              if (width > MAX_WIDTH) {
-                height *= MAX_WIDTH / width;
-                width = MAX_WIDTH;
-              }
-            } else {
-              if (height > MAX_HEIGHT) {
-                width *= MAX_HEIGHT / height;
-                height = MAX_HEIGHT;
-              }
-            }
-
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-
-            // Extreme compress to JPEG with 60% quality
-            canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.6);
-          };
-          img.onerror = (err) => reject(err);
-        };
-        reader.onerror = (err) => reject(err);
-      });
-
-      showToast('Uploading to Cloudinary... ☁️');
-      const data = new FormData();
-      data.append('file', compressedBlob, 'hero_image.jpg');
-      data.append('upload_preset', UPLOAD_PRESET);
-
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-        method: 'POST',
-        body: data
-      });
-      
-      const result = await res.json();
-      if (result.secure_url) {
-        setFormData(prev => ({ ...prev, image_url: result.secure_url }));
-        showToast('Hero Image Ready! 📸');
-      } else {
-        throw new Error('Upload failed');
-      }
-    } catch (err) {
-      console.error(err);
-      showToast('Image processing or upload failed', 'error');
-    } finally {
-      setUploadingImage(false);
-    }
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+      method: 'POST',
+      body: data
+    });
+    
+    const result = await res.json();
+    if (result.secure_url) return result.secure_url;
+    throw new Error('Upload failed');
   };
 
   const handleSubmit = async (e) => {
@@ -196,7 +196,20 @@ const CreateEvent = () => {
     try {
       const user = auth.currentUser;
       if (!user) throw new Error('Please login');
-      const { error } = await supabase.from('events').insert([{ ...formData, user_id: user.uid }]);
+
+      let finalImageUrl = formData.image_url;
+
+      if (pendingImageBlob) {
+        showToast('Uploading Hero Image... ☁️');
+        finalImageUrl = await uploadToCloudinary(pendingImageBlob);
+      }
+
+      showToast('Saving Event Details... 💾');
+      const { error } = await supabase.from('events').insert([{ 
+        ...formData, 
+        image_url: finalImageUrl, 
+        user_id: user.uid 
+      }]);
       if (error) throw error;
       showToast('Invitation Created! ✨');
       navigate(`/dashboard/my-invites`);
@@ -243,21 +256,21 @@ const CreateEvent = () => {
             </div>
           </div>
 
-          {/* CLOUDINARY IMAGE UPLOAD */}
+          {/* IMAGE UPLOAD & CROP */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label style={labelStyle}>Custom Hero Image (Cloudinary)</label>
+            <label style={labelStyle}>Custom Hero Image (Optional)</label>
             <div style={{ padding: '1.5rem', background: '#f8fafc', borderRadius: '1.5rem', border: '2px dashed #cbd5e1', textAlign: 'center', position: 'relative' }}>
-              {formData.image_url ? (
-                <div style={{ position: 'relative' }}>
-                  <img src={formData.image_url} alt="Preview" style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: '1rem' }} />
-                  <button type="button" onClick={() => setFormData({...formData, image_url: ''})} style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: 'red', color: 'white', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', fontWeight: 'bold' }}>×</button>
+              {pendingImagePreview ? (
+                <div style={{ position: 'relative', display: 'inline-block' }}>
+                  <img src={pendingImagePreview} alt="Preview" style={{ height: '300px', width: 'auto', objectFit: 'contain', borderRadius: '1rem', boxShadow: '0 10px 20px rgba(0,0,0,0.1)' }} />
+                  <button type="button" onClick={() => { setPendingImagePreview(''); setPendingImageBlob(null); }} style={{ position: 'absolute', top: '-10px', right: '-10px', background: 'red', color: 'white', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>×</button>
                 </div>
               ) : (
                 <>
-                  <input type="file" accept="image/*" onChange={handleImageUpload} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', zIndex: 2 }} />
+                  <input type="file" accept="image/*" onChange={handleImageSelect} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', zIndex: 2 }} />
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                    {uploadingImage ? <Loader2 className="animate-spin" size={24} color="#6366f1" /> : <div style={{ fontSize: '2rem' }}>📸</div>}
-                    <span style={{ fontWeight: 600, color: '#64748b' }}>{uploadingImage ? 'Uploading to Cloudinary...' : 'Click or drag an image here'}</span>
+                    <div style={{ fontSize: '2rem' }}>📸</div>
+                    <span style={{ fontWeight: 600, color: '#64748b' }}>Click or drag an image to crop</span>
                   </div>
                 </>
               )}
@@ -341,6 +354,27 @@ const CreateEvent = () => {
           </button>
         </form>
       </div>
+
+      {/* CROPPER MODAL */}
+      {imageToCrop && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 9999, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <Cropper
+              image={imageToCrop}
+              crop={crop}
+              zoom={zoom}
+              aspect={9 / 16}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={(croppedArea, croppedAreaPixels) => setCroppedAreaPixels(croppedAreaPixels)}
+            />
+          </div>
+          <div style={{ padding: '2rem', background: 'black', display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+            <button onClick={() => setImageToCrop(null)} style={{ padding: '1rem 2rem', background: '#333', color: 'white', borderRadius: '1rem', border: 'none', fontWeight: 800, cursor: 'pointer' }}>Cancel</button>
+            <button onClick={handleSaveCrop} style={{ padding: '1rem 2rem', background: '#6366f1', color: 'white', borderRadius: '1rem', border: 'none', fontWeight: 800, cursor: 'pointer' }}>Crop & Save Image</button>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 };
