@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Filter, Plus, Download, MoreVertical, Loader2, CheckCircle2, XCircle, Clock, Eye, Trash2, Calendar, Mail, FileText, User } from 'lucide-react';
+import { Search, Filter, Plus, Download, MoreVertical, Loader2, CheckCircle2, XCircle, Clock, Eye, Trash2, Calendar, Mail, FileText, User, AlertTriangle } from 'lucide-react';
 import api from '../lib/api';
 import { useToast } from '../context/ToastContext';
 import CreatePaymentModal from '../components/CreatePaymentModal';
@@ -9,6 +9,7 @@ import LoadingScreen from '../components/LoadingScreen';
 const Transactions = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTx, setSelectedTx] = useState(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,12 +43,13 @@ const Transactions = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this transaction? This action cannot be undone.')) return;
+  const handleDelete = async () => {
+    if (!deleteConfirmId) return;
     
     try {
-      await api.delete(`/payments/${id}`);
+      await api.delete(`/payments/${deleteConfirmId}`);
       showToast('Transaction deleted successfully');
+      setDeleteConfirmId(null);
       fetchTransactionsData();
     } catch (err) {
       showToast('Failed to delete transaction', 'error');
@@ -200,7 +202,7 @@ const Transactions = () => {
                           )}
 
                           <button 
-                            onClick={() => handleDelete(tx.id)}
+                            onClick={() => setDeleteConfirmId(tx.id)}
                             style={{ padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid #fee2e2', color: '#ef4444', background: '#fef2f2', cursor: 'pointer' }}
                             title="Delete Transaction"
                           >
@@ -223,7 +225,7 @@ const Transactions = () => {
         onRefresh={fetchTransactionsData}
       />
 
-      {/* View Transaction Modal */}
+      {/* Premium View Transaction Modal */}
       <AnimatePresence>
         {selectedTx && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1rem' }}>
@@ -283,6 +285,43 @@ const Transactions = () => {
                   style={{ width: '100%', padding: '1rem', background: '#1e293b', color: 'white', border: 'none', borderRadius: '1rem', fontWeight: 700, cursor: 'pointer', marginTop: '1rem' }}
                 >
                   Close Details
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Premium Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteConfirmId && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 110, padding: '1rem' }}>
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              style={{ background: 'white', padding: '2.5rem', borderRadius: '2rem', width: '100%', maxWidth: '400px', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}
+            >
+              <div style={{ width: '64px', height: '64px', background: '#fef2f2', color: '#ef4444', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+                <AlertTriangle size={32} />
+              </div>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, fontFamily: 'Outfit', marginBottom: '0.75rem', color: '#1e293b' }}>Confirm Delete</h3>
+              <p style={{ color: '#64748b', lineHeight: 1.6, marginBottom: '2rem' }}>
+                Are you sure you want to delete this transaction? This action is permanent and cannot be undone.
+              </p>
+              
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button 
+                  onClick={() => setDeleteConfirmId(null)}
+                  style={{ flex: 1, padding: '1rem', background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: '1rem', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleDelete}
+                  style={{ flex: 1, padding: '1rem', background: '#ef4444', color: 'white', border: 'none', borderRadius: '1rem', fontWeight: 700, cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(239, 68, 68, 0.3)' }}
+                >
+                  Yes, Delete
                 </button>
               </div>
             </motion.div>

@@ -14,7 +14,6 @@ const Checkout = () => {
   const [success, setSuccess] = useState(false);
   const [utr, setUtr] = useState('');
   
-  // Real-time merchant details from DB
   const [merchantData, setMerchantData] = useState({
     vpa: 'kanniyakumarione@okaxis',
     name: 'KKPay Merchant'
@@ -23,53 +22,42 @@ const Checkout = () => {
   const transactionId = searchParams.get('id');
   const amount = searchParams.get('amount') || '0.00';
   
-  // Dynamic UPI Link (Will be updated once DB data arrives)
   const upiLink = `upi://pay?pa=${merchantData.vpa}&pn=${encodeURIComponent(merchantData.name)}&am=${amount}&cu=INR&mc=0000&mode=02`;
 
-  // 1. Fetch Transaction AND Merchant Details from DB
+  // 1. REAL-TIME LISTENER: Watch for Admin Approval
   useEffect(() => {
-    const fetchRealDetails = async () => {
-      if (!transactionId) {
-        setFetching(false);
-        return;
-      }
+    if (!transactionId) return;
 
-      try {
-        // Fetch transaction to get the merchant_id
-        const { data: tx, error: txError } = await supabase
-          .from('transactions')
-          .select('status, merchant_id')
-          .eq('id', transactionId)
-          .single();
-
-        if (txError) throw txError;
-
-        // If already paid, show success
-        if (tx.status === 'Pending Verification' || tx.status === 'Completed') {
+    // Listen for changes to this specific transaction in the DB
+    const txSubscription = supabase
+      .channel('public:transactions')
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'transactions', 
+        filter: `id=eq.${transactionId}` 
+      }, (payload) => {
+        if (payload.new.status === 'Success' || payload.new.status === 'Completed') {
           setSuccess(true);
         }
+      })
+      .subscribe();
 
-        // Fetch the REAL bank details from the merchants table (Settings)
-        const { data: merchant, error: mError } = await supabase
-          .from('merchants')
-          .select('upi_id, business_name')
-          .eq('id', tx.merchant_id)
-          .single();
-
-        if (merchant) {
-          setMerchantData({
-            vpa: merchant.upi_id || 'kanniyakumarione@okaxis',
-            name: merchant.business_name || 'KKPay Merchant'
-          });
-        }
-      } catch (err) {
-        console.error('Error fetching checkout details:', err);
-      } finally {
-        setFetching(false);
-      }
+    const fetchDetails = async () => {
+      try {
+        const { data: tx } = await supabase.from('transactions').select('status, merchant_id').eq('id', transactionId).single();
+        if (tx.status === 'Success' || tx.status === 'Completed') setSuccess(true);
+        
+        const { data: merch } = await supabase.from('merchants').select('upi_id, business_name').eq('id', tx.merchant_id).single();
+        if (merch) setMerchantData({ vpa: merch.upi_id, name: merch.business_name });
+      } catch (err) {} finally { setFetching(false); }
     };
 
-    fetchRealDetails();
+    fetchDetails();
+
+    return () => {
+      supabase.removeChannel(txSubscription);
+    };
   }, [transactionId]);
 
   const handleSubmit = async (e) => {
@@ -86,7 +74,8 @@ const Checkout = () => {
         transactionId,
         utrNumber: utr
       });
-      setSuccess(true);
+      // We don't setSuccess(true) here immediately, we wait for the listener or show a "Verification Pending" state
+      showToast('UTR Submitted for verification!');
     } catch (err) {
       alert('Error verifying payment: ' + (err.response?.data?.message || err.message));
     } finally {
@@ -94,35 +83,16 @@ const Checkout = () => {
     }
   };
 
-  if (fetching) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
-        <Loader2 className="animate-spin" size={48} color="var(--primary)" />
-      </div>
-    );
-  }
+  if (fetching) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Loader2 className="animate-spin" size={48} color="var(--primary)" /></div>;
 
   if (success) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', padding: '1.5rem' }}>
-        <motion.div 
-          initial={{ scale: 0.9, opacity: 0 }} 
-          animate={{ scale: 1, opacity: 1 }}
-          style={{ background: 'white', padding: '3rem', borderRadius: '2rem', boxShadow: '0 20px 50px rgba(0,0,0,0.05)', textAlign: 'center', maxWidth: '400px', width: '100%' }}
-        >
-          <div style={{ width: '80px', height: '80px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
-            <CheckCircle2 size={40} color="#10b981" />
-          </div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '1rem' }}>Payment Submitted!</h2>
-          <p style={{ color: '#64748b', lineHeight: 1.6, marginBottom: '2rem' }}>
-            Your payment for ₹{amount} has been received. Our team will verify the UTR number shortly.
-          </p>
-          <button 
-            onClick={() => window.close()}
-            style={{ width: '100%', padding: '1rem', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '1rem', fontWeight: 700, cursor: 'pointer' }}
-          >
-            Close Window
-          </button>
+        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: 'white', padding: '3rem', borderRadius: '2rem', textAlign: 'center', maxWidth: '400px', width: '100%' }}>
+          <div style={{ width: '80px', height: '80px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}><CheckCircle2 size={40} color="#10b981" /></div>
+          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '1rem' }}>Payment Successful!</h2>
+          <p style={{ color: '#64748b', lineHeight: 1.6, marginBottom: '2rem' }}>Your payment of ₹{amount} has been verified and completed successfully.</p>
+          <button onClick={() => window.close()} style={{ width: '100%', padding: '1rem', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '1rem', fontWeight: 700, cursor: 'pointer' }}>Close Window</button>
         </motion.div>
       </div>
     );
@@ -130,9 +100,7 @@ const Checkout = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <div style={{ marginBottom: '2rem' }}>
-        <Logo size={40} />
-      </div>
+      <div style={{ marginBottom: '2rem' }}><Logo size={40} /></div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', maxWidth: '450px', width: '100%' }}>
         <div style={{ background: 'white', padding: '2rem', borderRadius: '1.5rem', boxShadow: '0 10px 30px rgba(0,0,0,0.02)', border: '1px solid #e2e8f0' }}>
@@ -143,73 +111,29 @@ const Checkout = () => {
           </div>
 
           <div style={{ background: '#f8fafc', padding: '2rem', borderRadius: '1.25rem', marginBottom: '2rem', textAlign: 'center', border: '2px dashed #e2e8f0' }}>
-            <div style={{ background: 'white', padding: '1.25rem', borderRadius: '1rem', display: 'inline-block', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
-              <QRCodeSVG 
-                value={upiLink} 
-                size={200}
-                includeMargin={true}
-                level="H"
-              />
-            </div>
+            <div style={{ background: 'white', padding: '1.25rem', borderRadius: '1rem', display: 'inline-block', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}><QRCodeSVG value={upiLink} size={200} includeMargin={true} level="H" /></div>
             <p style={{ fontSize: '0.875rem', color: '#64748b', marginTop: '1.25rem', fontWeight: 700 }}>Scan QR with GPay, PhonePe or Paytm</p>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <button 
-              onClick={() => {
-                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                if (isMobile) {
-                  window.location.href = upiLink;
-                } else {
-                  alert('Please scan the QR code with your phone or open this link on a mobile device to pay via app.');
-                }
-              }}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '1rem', textDecoration: 'none', fontWeight: 700, cursor: 'pointer', boxShadow: '0 10px 20px -5px rgba(99, 102, 241, 0.4)' }}
-            >
-              <Smartphone size={20} /> Pay via App
-            </button>
-          </div>
+          <button onClick={() => { const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent); if (isMobile) window.location.href = upiLink; else alert('Please scan the QR code with your phone.'); }} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '1rem', fontWeight: 700, cursor: 'pointer' }}><Smartphone size={20} /> Pay via App</button>
         </div>
 
         <div style={{ background: 'white', padding: '2rem', borderRadius: '1.5rem', border: '1px solid #e2e8f0' }}>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <ShieldCheck size={20} color="#10b981" /> Confirm Payment
-          </h3>
-          <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '1.5rem', lineHeight: 1.6 }}>
-            After paying, please enter the **12-digit UTR / Ref No.** from your payment app to confirm your order.
-          </p>
+          <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ShieldCheck size={20} color="#10b981" /> Confirm Payment</h3>
+          <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '1.5rem', lineHeight: 1.6 }}>After paying, please enter the **12-digit UTR** from your app. The page will update automatically once verified.</p>
           
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div style={{ position: 'relative' }}>
-              <input 
-                type="text" 
-                placeholder="Enter 12-digit UTR"
-                maxLength={12}
-                value={utr}
-                onChange={(e) => setUtr(e.target.value.replace(/\D/g, ''))}
-                style={{ width: '100%', padding: '1rem', borderRadius: '0.75rem', border: '2px solid #e2e8f0', outline: 'none', fontSize: '1.25rem', fontWeight: 800, textAlign: 'center', letterSpacing: '0.2em', color: 'var(--primary)' }}
-              />
-            </div>
-            <button 
-              disabled={loading}
-              style={{ width: '100%', padding: '1rem', background: '#1e293b', color: 'white', border: 'none', borderRadius: '1rem', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-            >
-              {loading ? <Loader2 className="animate-spin" /> : 'Verify Payment'}
-            </button>
+            <input type="text" placeholder="Enter 12-digit UTR" maxLength={12} value={utr} onChange={(e) => setUtr(e.target.value.replace(/\D/g, ''))} style={{ width: '100%', padding: '1rem', borderRadius: '0.75rem', border: '2px solid #e2e8f0', outline: 'none', fontSize: '1.25rem', fontWeight: 800, textAlign: 'center', letterSpacing: '0.2em', color: 'var(--primary)' }} />
+            <button disabled={loading} style={{ width: '100%', padding: '1rem', background: '#1e293b', color: 'white', border: 'none', borderRadius: '1rem', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>{loading ? <Loader2 className="animate-spin" /> : 'Verify Payment'}</button>
           </form>
 
-          <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#fffbeb', borderRadius: '0.75rem', border: '1px solid #fef3c7', display: 'flex', gap: '0.75rem' }}>
-            <AlertCircle size={18} color="#d97706" style={{ flexShrink: 0 }} />
-            <p style={{ fontSize: '0.75rem', color: '#92400e', lineHeight: 1.5 }}>
-              Do not close this page or refresh until you enter the UTR number.
-            </p>
+          <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#f0f9ff', borderRadius: '0.75rem', border: '1px solid #e0f2fe', display: 'flex', gap: '0.75rem' }}>
+            <div className="animate-pulse" style={{ width: '8px', height: '8px', background: '#0ea5e9', borderRadius: '50%', marginTop: '4px' }} />
+            <p style={{ fontSize: '0.75rem', color: '#0369a1', lineHeight: 1.5 }}>Listening for payment confirmation. Page will auto-update.</p>
           </div>
         </div>
       </div>
-      
-      <div style={{ marginTop: '3rem', color: '#94a3b8', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <ShieldCheck size={16} /> Secured by KKPay Infrastructure
-      </div>
+      <div style={{ marginTop: '3rem', color: '#94a3b8', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ShieldCheck size={16} /> Secured by KKPay Infrastructure</div>
     </div>
   );
 };
