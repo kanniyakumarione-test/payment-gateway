@@ -19,9 +19,8 @@ const Checkout = () => {
   const merchantName = searchParams.get('merchant') || 'KKPay Merchant';
   const vpa = searchParams.get('vpa') || 'kanniyakumarione@okaxis';
   
-  // Using the "Essential Only" link to let the banking app fetch the official name from the server.
-  // This avoids GPay "Mismatch" or "Unregistered" errors.
-  const upiLink = `upi://pay?pa=${vpa}&am=${amount}&cu=INR`;
+  // Using "Pro-Merchant" flags (mc=0000 and mode=02) to signal a secure business transaction.
+  const upiLink = `upi://pay?pa=${vpa}&pn=${encodeURIComponent(merchantName)}&am=${amount}&cu=INR&mc=0000&mode=02`;
 
   // 1. Check current transaction status from database on load
   useEffect(() => {
