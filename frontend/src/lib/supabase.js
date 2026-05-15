@@ -1,12 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
-// These should be moved to .env
-const supabaseUrl = 'YOUR_SUPABASE_URL';
-const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Helper functions for common operations
 export const fetchTransactions = async (merchantId) => {
   const { data, error } = await supabase
     .from('transactions')
