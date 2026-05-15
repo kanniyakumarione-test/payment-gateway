@@ -14,40 +14,62 @@ const Checkout = () => {
   const [success, setSuccess] = useState(false);
   const [utr, setUtr] = useState('');
   
+  // Real-time merchant details from DB
+  const [merchantData, setMerchantData] = useState({
+    vpa: 'kanniyakumarione@okaxis',
+    name: 'KKPay Merchant'
+  });
+
   const transactionId = searchParams.get('id');
   const amount = searchParams.get('amount') || '0.00';
-  const merchantName = searchParams.get('merchant') || 'KKPay Merchant';
-  const vpa = searchParams.get('vpa') || 'kanniyakumarione@okaxis';
   
-  // Using "Pro-Merchant" flags (mc=0000 and mode=02) to signal a secure business transaction.
-  const upiLink = `upi://pay?pa=${vpa}&pn=${encodeURIComponent(merchantName)}&am=${amount}&cu=INR&mc=0000&mode=02`;
+  // Dynamic UPI Link (Will be updated once DB data arrives)
+  const upiLink = `upi://pay?pa=${merchantData.vpa}&pn=${encodeURIComponent(merchantData.name)}&am=${amount}&cu=INR&mc=0000&mode=02`;
 
-  // 1. Check current transaction status from database on load
+  // 1. Fetch Transaction AND Merchant Details from DB
   useEffect(() => {
-    const checkStatus = async () => {
+    const fetchRealDetails = async () => {
       if (!transactionId) {
         setFetching(false);
         return;
       }
 
       try {
-        const { data, error } = await supabase
+        // Fetch transaction to get the merchant_id
+        const { data: tx, error: txError } = await supabase
           .from('transactions')
-          .select('status')
+          .select('status, merchant_id')
           .eq('id', transactionId)
           .single();
 
-        if (data && (data.status === 'Pending Verification' || data.status === 'Completed')) {
+        if (txError) throw txError;
+
+        // If already paid, show success
+        if (tx.status === 'Pending Verification' || tx.status === 'Completed') {
           setSuccess(true);
         }
+
+        // Fetch the REAL bank details from the merchants table (Settings)
+        const { data: merchant, error: mError } = await supabase
+          .from('merchants')
+          .select('upi_id, business_name')
+          .eq('id', tx.merchant_id)
+          .single();
+
+        if (merchant) {
+          setMerchantData({
+            vpa: merchant.upi_id || 'kanniyakumarione@okaxis',
+            name: merchant.business_name || 'KKPay Merchant'
+          });
+        }
       } catch (err) {
-        console.error('Error checking status:', err);
+        console.error('Error fetching checkout details:', err);
       } finally {
         setFetching(false);
       }
     };
 
-    checkStatus();
+    fetchRealDetails();
   }, [transactionId]);
 
   const handleSubmit = async (e) => {
@@ -117,7 +139,7 @@ const Checkout = () => {
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
             <div style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Amount to Pay</div>
             <div style={{ fontSize: '2.5rem', fontWeight: 900, fontFamily: 'Outfit', color: '#1e293b' }}>₹{amount}</div>
-            <div style={{ fontSize: '0.875rem', color: '#6366f1', fontWeight: 700, marginTop: '0.25rem' }}>{merchantName}</div>
+            <div style={{ fontSize: '0.875rem', color: '#6366f1', fontWeight: 700, marginTop: '0.25rem' }}>{merchantData.name}</div>
           </div>
 
           <div style={{ background: '#f8fafc', padding: '2rem', borderRadius: '1.25rem', marginBottom: '2rem', textAlign: 'center', border: '2px dashed #e2e8f0' }}>
