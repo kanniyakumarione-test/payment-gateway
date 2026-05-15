@@ -14,6 +14,7 @@ import AdminPanel from './pages/AdminPanel';
 import NotFound from './pages/NotFound';
 import Pricing from './pages/Pricing';
 import Legal from './pages/Legal';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
@@ -26,7 +27,14 @@ function App() {
       <Route path="/legal" element={<Legal />} />
       
       {/* Dashboard Protected Routes (Mock) */}
-      <Route path="/dashboard" element={<DashboardLayout />}>
+      <Route 
+        path="/dashboard" 
+        element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<DashboardOverview />} />
         <Route path="transactions" element={<Transactions />} />
         <Route path="payouts" element={<Payouts />} />
