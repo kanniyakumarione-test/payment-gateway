@@ -65,7 +65,7 @@ const Overview = () => {
   }, []);
 
   const cards = [
-    { label: 'Total Revenue', value: `\u20B9${stats.totalRevenue.toLocaleString()}`, change: '+12.5%', icon: <TrendingUp color="#10b981" />, trend: 'up' },
+    { label: 'Total Revenue', value: `₹${stats.totalRevenue.toLocaleString()}`, change: '+12.5%', icon: <TrendingUp color="#10b981" />, trend: 'up' },
     { label: 'Total Transactions', value: stats.totalTransactions, change: '+5', icon: <ArrowUpRight color="var(--primary)" />, trend: 'up' },
     { label: 'Active Customers', value: stats.activeCustomers, change: '+2', icon: <Users color="#6366f1" />, trend: 'up' },
     { label: 'Pending Verification', value: stats.pendingVerification, change: 'Action Required', icon: <Clock color="#f59e0b" />, trend: 'neutral' },
@@ -120,7 +120,7 @@ const Overview = () => {
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
                 <Tooltip 
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                  formatter={(value) => [`\u20B9${value}`, 'Revenue']}
+                  formatter={(value) => [`₹${value}`, 'Revenue']}
                 />
                 <Area type="monotone" dataKey="amount" stroke="var(--primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorAmt)" />
               </AreaChart>

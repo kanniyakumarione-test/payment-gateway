@@ -12,6 +12,8 @@ import DevDocs from './pages/DevDocs';
 import Checkout from './pages/Checkout';
 import AdminPanel from './pages/AdminPanel';
 import NotFound from './pages/NotFound';
+import Pricing from './pages/Pricing';
+import Legal from './pages/Legal';
 
 function App() {
   return (
@@ -20,6 +22,8 @@ function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/pay" element={<Checkout />} />
+      <Route path="/pricing" element={<Pricing />} />
+      <Route path="/legal" element={<Legal />} />
       
       {/* Dashboard Protected Routes (Mock) */}
       <Route path="/dashboard" element={<DashboardLayout />}>

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { loginWithGoogle } from '../lib/firebase';
 import { useNavigate } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
+import Logo from '../components/Logo';
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -45,7 +46,7 @@ const Login = () => {
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
-          <div style={{ width: '48px', height: '48px', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', borderRadius: '12px' }} />
+          <Logo size={48} />
         </div>
         
         <h1 style={{ fontSize: '2rem', fontWeight: 800, fontFamily: 'Outfit', marginBottom: '1rem' }}>Welcome to KKPay</h1>
@@ -79,9 +80,7 @@ const Login = () => {
           )}
         </button>
 
-        <div style={{ marginTop: '2.5rem', fontSize: '0.875rem', color: '#94a3b8' }}>
-          Don't have an account? <a href="#" style={{ color: 'var(--primary)', fontWeight: 600 }}>Contact Sales</a>
-        </div>
+
       </motion.div>
     </div>
   );

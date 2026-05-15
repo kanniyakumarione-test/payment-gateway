@@ -45,9 +45,9 @@ const Payouts = () => {
   }, []);
 
   const statCards = [
-    { label: 'Available for Payout', value: `\u20B9${stats.available.toLocaleString()}`, icon: <Wallet color="var(--primary)" /> },
-    { label: 'Last Payout', value: `\u20B9${stats.lastPayout.toLocaleString()}`, icon: <CheckCircle2 color="var(--accent)" /> },
-    { label: 'Pending Payouts', value: `\u20B9${stats.pending.toLocaleString()}`, icon: <Clock color="#f59e0b" /> },
+    { label: 'Available for Payout', value: `₹${stats.available.toLocaleString()}`, icon: <Wallet color="var(--primary)" /> },
+    { label: 'Last Payout', value: `₹${stats.lastPayout.toLocaleString()}`, icon: <CheckCircle2 color="var(--accent)" /> },
+    { label: 'Pending Payouts', value: `₹${stats.pending.toLocaleString()}`, icon: <Clock color="#f59e0b" /> },
   ];
 
   const getStatusStyle = (status) => {
