@@ -37,7 +37,7 @@ const Settings = () => {
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
       <div style={{ marginBottom: '2.5rem' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 900, fontFamily: 'Outfit' }}>Account Settings</h1>
-        <p style={{ color: '#64748b' }}>Manage your AuraInvite profile and preferences.</p>
+        <p style={{ color: '#64748b' }}>Manage your KKDesign profile and preferences.</p>
       </div>
 
       <div style={{ background: 'white', padding: '2.5rem', borderRadius: '2rem', border: '1px solid #e2e8f0', maxWidth: '600px' }}>
@@ -76,7 +76,7 @@ const Settings = () => {
             </div>
             <div>
               <div style={{ fontWeight: 800, fontSize: '0.875rem', color: '#166534' }}>Account Verified</div>
-              <div style={{ fontSize: '0.75rem', color: '#166534', opacity: 0.8 }}>Your AuraInvite account is active and secure.</div>
+              <div style={{ fontSize: '0.75rem', color: '#166534', opacity: 0.8 }}>Your KKDesign account is active and secure.</div>
             </div>
           </div>
 
@@ -92,7 +92,7 @@ const Settings = () => {
 
       <div style={{ marginTop: '2rem', textAlign: 'center', maxWidth: '600px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: '#ff6b6b', fontWeight: 700 }}>
-          <Sparkles size={16} /> AuraInvite Elite Tier Member
+          <Sparkles size={16} /> KKDesign Elite Tier Member
         </div>
       </div>
     </motion.div>
