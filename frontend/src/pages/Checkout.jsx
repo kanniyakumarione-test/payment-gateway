@@ -19,7 +19,7 @@ const Checkout = () => {
   const merchantName = searchParams.get('merchant') || 'KKPay Merchant';
   const vpa = searchParams.get('vpa') || 'kanniyakumarione@okaxis';
   
-  const upiLink = `upi://pay?pa=${vpa}&pn=${encodeURIComponent(merchantName)}&am=${amount}&cu=INR&tn=${encodeURIComponent('Pay to ' + merchantName + ' - ID ' + (transactionId?.slice(0,6) || ''))}&tr=${transactionId || ''}`;
+  const upiLink = `upi://pay?pa=${vpa}&pn=${encodeURIComponent(merchantName)}&am=${amount}&cu=INR`;
 
   // 1. Check current transaction status from database on load
   useEffect(() => {
