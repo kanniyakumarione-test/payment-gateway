@@ -1,152 +1,146 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  TrendingUp, 
-  Users, 
-  ArrowUpRight, 
-  ArrowDownRight, 
-  Wallet, 
-  Loader2,
-  CheckCircle2,
-  Clock,
-  AlertCircle
-} from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useNavigate } from 'react-router-dom';
+import { Heart, Plus, Calendar, Sparkles, Share2, Eye, ChevronRight, Gift, PartyPopper } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { auth } from '../lib/firebase';
 import LoadingScreen from '../components/LoadingScreen';
 
-const Overview = () => {
+const DashboardOverview = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
-    totalRevenue: 0,
-    totalTransactions: 0,
-    pendingVerification: 0,
-    activeCustomers: 0,
-    chartData: []
+    total: 0,
+    weddings: 0,
+    birthdays: 0
   });
-
-  const fetchDashboardData = async () => {
-    setLoading(true);
-    const user = auth.currentUser;
-    if (!user) return;
-
-    try {
-      // 1. Fetch Transactions
-      const { data: transactions, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('merchant_id', user.uid)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-
-      const successful = transactions.filter(t => t.status === 'Completed');
-      const pending = transactions.filter(t => t.status === 'Pending Verification');
-      const uniqueCustomers = new Set(transactions.map(t => t.customer_email)).size;
-
-      // Group by date for chart
-      const last7Days = [...Array(7)].map((_, i) => {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        const dayTotal = successful
-          .filter(t => new Date(t.created_at).toDateString() === d.toDateString())
-          .reduce((acc, t) => acc + t.amount, 0);
-        return { name: dateStr, amount: dayTotal };
-      }).reverse();
-
-      setStats({
-        totalRevenue: successful.reduce((acc, t) => acc + t.amount, 0),
-        totalTransactions: transactions.length,
-        pendingVerification: pending.length,
-        activeCustomers: uniqueCustomers,
-        chartData: last7Days
-      });
-    } catch (err) {
-      console.error('Error loading dashboard stats:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [recentInvites, setRecentInvites] = useState([]);
 
   useEffect(() => {
-    fetchDashboardData();
+    const fetchStats = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      try {
+        const { data: events } = await supabase
+          .from('events')
+          .select('*')
+          .eq('user_id', user.uid)
+          .order('created_at', { ascending: false });
+
+        if (events) {
+          setStats({
+            total: events.length,
+            weddings: events.filter(e => e.type === 'Wedding').length,
+            birthdays: events.filter(e => e.type === 'Birthday').length
+          });
+          setRecentInvites(events.slice(0, 3));
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
   }, []);
 
-  const cards = [
-    { label: 'Total Revenue', value: `₹${stats.totalRevenue.toLocaleString()}`, change: '+0%', icon: <TrendingUp color="#10b981" />, trend: 'up' },
-    { label: 'Total Transactions', value: stats.totalTransactions, change: '+0', icon: <ArrowUpRight color="var(--primary)" />, trend: 'up' },
-    { label: 'Active Customers', value: stats.activeCustomers, change: '+0', icon: <Users color="#6366f1" />, trend: 'up' },
-    { label: 'Pending Verification', value: stats.pendingVerification, change: 'Action Required', icon: <Clock color="#f59e0b" />, trend: 'neutral' },
-  ];
-
-  if (loading) {
-    return <LoadingScreen fullScreen />;
-  }
+  if (loading) return <LoadingScreen />;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, fontFamily: 'Outfit' }}>Dashboard Overview</h1>
-        <p style={{ color: '#64748b' }}>Here's what's happening with your payments today.</p>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+        <div>
+          <h1 style={{ fontSize: '2rem', fontWeight: 900, fontFamily: 'Outfit' }}>Welcome back, {auth.currentUser?.displayName?.split(' ')[0] || 'User'}! ✨</h1>
+          <p style={{ color: '#64748b' }}>Ready to create some more magic today?</p>
+        </div>
+        <button 
+          onClick={() => navigate('/dashboard/create')}
+          style={{ padding: '0.75rem 1.5rem', background: '#1a1a1a', color: 'white', borderRadius: '1rem', fontWeight: 700, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+        >
+          <Plus size={18} /> New Invitation
+        </button>
       </div>
 
+      {/* Stats Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
-        {cards.map((card, i) => (
-          <motion.div 
-            key={i}
-            whileHover={{ y: -5 }}
-            style={{ background: 'white', padding: '1.5rem', borderRadius: '1.25rem', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-              <div style={{ padding: '0.75rem', background: 'rgba(99, 102, 241, 0.05)', borderRadius: '0.75rem' }}>
-                {card.icon}
-              </div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: card.trend === 'up' ? '#10b981' : '#f59e0b', background: card.trend === 'up' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)', padding: '0.25rem 0.625rem', borderRadius: '100px', alignSelf: 'start' }}>
-                {card.change}
-              </div>
-            </div>
-            <div style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 600, marginBottom: '0.25rem' }}>{card.label}</div>
-            <div style={{ fontSize: '1.75rem', fontWeight: 800, fontFamily: 'Outfit' }}>{card.value}</div>
-          </motion.div>
-        ))}
-      </div>
-
-      <div style={{ background: 'white', padding: '2rem', borderRadius: '1.5rem', border: '1px solid #e2e8f0', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <div style={{ background: 'white', padding: '1.5rem', borderRadius: '1.5rem', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ width: '56px', height: '56px', background: '#fff0f0', color: '#ff6b6b', borderRadius: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Heart size={24} fill="currentColor" /></div>
           <div>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.25rem' }}>Revenue Growth</h3>
-            <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Your daily successful transaction volume.</p>
-          </div>
-          <div style={{ padding: '0.5rem 1rem', background: '#f8fafc', borderRadius: '0.75rem', fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>
-            Last 7 Days
+            <div style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 600 }}>Total Invites</div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 900 }}>{stats.total}</div>
           </div>
         </div>
-        
-        <div style={{ width: '100%', height: 350 }}>
-          <ResponsiveContainer>
-            <AreaChart data={stats.chartData}>
-              <defs>
-                <linearGradient id="colorAmt" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} dy={10} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} tickFormatter={(value) => `₹${value}`} />
-              <Tooltip 
-                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                formatter={(value) => [`₹${value.toLocaleString()}`, 'Revenue']}
-              />
-              <Area type="monotone" dataKey="amount" stroke="var(--primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorAmt)" />
-            </AreaChart>
-          </ResponsiveContainer>
+        <div style={{ background: 'white', padding: '1.5rem', borderRadius: '1.5rem', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ width: '56px', height: '56px', background: '#f0f9ff', color: '#0ea5e9', borderRadius: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Gift size={24} /></div>
+          <div>
+            <div style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 600 }}>Weddings</div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 900 }}>{stats.weddings}</div>
+          </div>
+        </div>
+        <div style={{ background: 'white', padding: '1.5rem', borderRadius: '1.5rem', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ width: '56px', height: '56px', background: '#f0fdf4', color: '#22c55e', borderRadius: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><PartyPopper size={24} /></div>
+          <div>
+            <div style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 600 }}>Birthdays</div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 900 }}>{stats.birthdays}</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
+        {/* Recent Invites */}
+        <div style={{ background: 'white', padding: '2rem', borderRadius: '2rem', border: '1px solid #e2e8f0' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Recent Invitations</h3>
+            <button onClick={() => navigate('/dashboard/my-invites')} style={{ color: 'var(--primary)', fontWeight: 700, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>View All <ChevronRight size={16} /></button>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {recentInvites.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
+                <Sparkles size={40} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
+                <p>No invitations created yet. Start with your first one!</p>
+              </div>
+            ) : recentInvites.map((invite) => (
+              <div key={invite.id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem', background: '#f8fafc', borderRadius: '1.25rem', border: '1px solid #f1f5f9' }}>
+                <div style={{ width: '48px', height: '48px', background: 'white', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: invite.type === 'Wedding' ? '#ff6b6b' : '#0ea5e9' }}>
+                  {invite.type === 'Wedding' ? <Heart size={24} /> : <Gift size={24} />}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 800 }}>{invite.title}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{new Date(invite.event_date).toLocaleDateString()} • {invite.venue.slice(0, 30)}...</div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button onClick={() => window.open(`/invite/${invite.id}`, '_blank')} style={{ padding: '0.5rem', borderRadius: '0.5rem', background: 'white', border: '1px solid #e2e8f0', cursor: 'pointer' }}><Eye size={16} /></button>
+                  <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/invite/${invite.id}`); showToast('Link Copied!'); }} style={{ padding: '0.5rem', borderRadius: '0.5rem', background: 'white', border: '1px solid #e2e8f0', cursor: 'pointer' }}><Share2 size={16} /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Tips */}
+        <div style={{ background: '#1a1a1a', padding: '2rem', borderRadius: '2rem', color: 'white' }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '1.5rem' }}>Pro Tips 💡</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <div style={{ width: '8px', height: '8px', background: '#ff6b6b', borderRadius: '50%', marginTop: '6px', flexShrink: 0 }} />
+              <p style={{ fontSize: '0.875rem', color: '#94a3b8', lineHeight: 1.5 }}>Add a heartfelt description to make your wedding invite more personal.</p>
+            </div>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <div style={{ width: '8px', height: '8px', background: '#4ecdc4', borderRadius: '50%', marginTop: '6px', flexShrink: 0 }} />
+              <p style={{ fontSize: '0.875rem', color: '#94a3b8', lineHeight: 1.5 }}>Share your unique link via WhatsApp or Instagram for instant RSVPs.</p>
+            </div>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <div style={{ width: '8px', height: '8px', background: '#ffe66d', borderRadius: '50%', marginTop: '6px', flexShrink: 0 }} />
+              <p style={{ fontSize: '0.875rem', color: '#94a3b8', lineHeight: 1.5 }}>Use clear venue details so guests can easily find your celebration.</p>
+            </div>
+          </div>
         </div>
       </div>
     </motion.div>
   );
 };
 
-export default Overview;
+export default DashboardOverview;

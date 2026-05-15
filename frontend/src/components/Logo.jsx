@@ -14,7 +14,7 @@ const Logo = ({ size = 32 }) => (
     }}>
       <span style={{ color: 'white', fontWeight: 900, fontSize: size / 2, fontFamily: 'Outfit' }}>K</span>
     </div>
-    <span style={{ fontSize: `${size * 0.6}px`, fontWeight: 800, fontFamily: 'Outfit', background: 'linear-gradient(135deg, #1e293b, #475569)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>KKPay</span>
+    <span style={{ fontSize: `${size * 0.6}px`, fontWeight: 800, fontFamily: 'Outfit', background: 'linear-gradient(135deg, #1e293b, #475569)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>KKDesign</span>
   </div>
 );
 

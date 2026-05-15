@@ -17,14 +17,4 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
-export const fetchTransactions = async (merchantId) => {
-  const response = await api.get(`/payments/list`);
-  return response.data.transactions;
-};
-
-export const createTransaction = async (transactionData) => {
-  const response = await api.post('/payments/create', transactionData);
-  return response.data.transaction;
-};
-
 export default api;

@@ -4,17 +4,12 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import DashboardLayout from './layouts/DashboardLayout';
 import DashboardOverview from './pages/Overview';
-import Transactions from './pages/Transactions';
-import Payouts from './pages/Payouts';
-import Customers from './pages/Customers';
+import CreateEvent from './pages/CreateEvent';
+import EventPreview from './pages/EventPreview';
+import MyInvites from './pages/MyInvites';
 import Settings from './pages/Settings';
-import DevDocs from './pages/DevDocs';
-import Checkout from './pages/Checkout';
-import AdminPanel from './pages/AdminPanel';
-import NotFound from './pages/NotFound';
-import Pricing from './pages/Pricing';
-import Legal from './pages/Legal';
 import ProtectedRoute from './components/ProtectedRoute';
+import NotFound from './pages/NotFound';
 
 function App() {
   return (
@@ -22,11 +17,9 @@ function App() {
       {/* Public Routes */}
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/pay" element={<Checkout />} />
-      <Route path="/pricing" element={<Pricing />} />
-      <Route path="/legal" element={<Legal />} />
+      <Route path="/invite/:id" element={<EventPreview />} />
       
-      {/* Dashboard Protected Routes (Mock) */}
+      {/* Dashboard Protected Routes */}
       <Route 
         path="/dashboard" 
         element={
@@ -36,12 +29,9 @@ function App() {
         }
       >
         <Route index element={<DashboardOverview />} />
-        <Route path="transactions" element={<Transactions />} />
-        <Route path="payouts" element={<Payouts />} />
-        <Route path="customers" element={<Customers />} />
+        <Route path="create" element={<CreateEvent />} />
+        <Route path="my-invites" element={<MyInvites />} />
         <Route path="settings" element={<Settings />} />
-        <Route path="admin" element={<AdminPanel />} />
-        <Route path="docs" element={<DevDocs />} />
         <Route path="*" element={<NotFound />} />
       </Route>
 

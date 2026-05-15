@@ -1,89 +1,67 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { loginWithGoogle } from '../lib/firebase';
 import { useNavigate } from 'react-router-dom';
-import { LogIn } from 'lucide-react';
-import Logo from '../components/Logo';
+import { Sparkles, Loader2 } from 'lucide-react';
+import { auth, googleProvider } from '../lib/firebase';
+import { signInWithPopup } from 'firebase/auth';
+import { useToast } from '../context/ToastContext';
 
 const Login = () => {
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { showToast } = useToast();
+  const [loading, setLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      const user = await loginWithGoogle();
-      console.log("Logged in user:", user);
-      // Success! Redirect to dashboard
+      await signInWithPopup(auth, googleProvider);
+      showToast('Logged in successfully! ✨');
       navigate('/dashboard');
     } catch (error) {
-      alert("Failed to login with Google. Check console for details.");
+      showToast('Login failed. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      background: 'var(--bg-alt)',
-      padding: '2rem'
-    }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', padding: '1.5rem' }}>
       <motion.div 
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        style={{ 
-          width: '100%', 
-          maxWidth: '450px', 
-          background: 'white', 
-          padding: '3rem', 
-          borderRadius: '1.5rem', 
-          boxShadow: 'var(--shadow-xl)',
-          textAlign: 'center'
-        }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ background: 'white', padding: '3rem', borderRadius: '2.5rem', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.05)', width: '100%', maxWidth: '450px', textAlign: 'center' }}
       >
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
-          <Logo size={48} />
+          <div style={{ width: '64px', height: '64px', background: 'linear-gradient(135deg, #6366f1, #a855f7)', borderRadius: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+            <Sparkles size={32} fill="currentColor" />
+          </div>
         </div>
-        
-        <h1 style={{ fontSize: '2rem', fontWeight: 800, fontFamily: 'Outfit', marginBottom: '1rem' }}>Welcome to KKPay</h1>
-        <p style={{ color: '#64748b', marginBottom: '2.5rem' }}>Login to your merchant dashboard to manage your payments.</p>
+
+        <h1 style={{ fontSize: '2.25rem', fontWeight: 900, fontFamily: 'Outfit', color: '#1e293b', marginBottom: '0.75rem' }}>KKDesign</h1>
+        <p style={{ color: '#64748b', fontSize: '1.125rem', marginBottom: '2.5rem' }}>Login to your dashboard to manage your celebrations.</p>
 
         <button 
           onClick={handleGoogleLogin}
           disabled={loading}
-          style={{ 
-            width: '100%', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            gap: '0.75rem', 
-            padding: '1rem', 
-            borderRadius: '0.75rem', 
-            border: '1px solid #e2e8f0', 
-            background: 'white', 
-            fontWeight: 600, 
-            cursor: loading ? 'not-allowed' : 'pointer',
-            transition: 'var(--transition)'
-          }}
+          style={{ width: '100%', padding: '1.25rem', background: 'white', border: '2px solid #f1f5f9', borderRadius: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', fontSize: '1.125rem', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', transition: '0.2s ease' }}
         >
-          {loading ? (
-            'Processing...'
-          ) : (
+          {loading ? <Loader2 className="animate-spin" /> : (
             <>
-              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" width="20" />
+              <img src="https://cdn.cdnlogo.com/logos/g/35/google-icon.svg" alt="Google" style={{ width: '20px' }} />
               Sign in with Google
             </>
           )}
         </button>
 
-
+        <div style={{ marginTop: '2.5rem', color: '#94a3b8', fontSize: '0.875rem' }}>
+          By signing in, you agree to our Terms of Service.
+        </div>
       </motion.div>
     </div>
   );
 };
+
+// Simple useState helper since I am overwriting
+import { useState } from 'react';
 
 export default Login;
