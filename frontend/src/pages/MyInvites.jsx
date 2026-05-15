@@ -14,6 +14,7 @@ const MyInvites = () => {
   const [activeRsvpEvent, setActiveRsvpEvent] = useState(null);
   const [rsvpList, setRsvpList] = useState([]);
   const [loadingRsvps, setLoadingRsvps] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState(null); // Custom confirm modal state
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -59,15 +60,17 @@ const MyInvites = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this invitation?')) return;
+  const confirmDelete = async () => {
+    if (!deleteTargetId) return;
     try {
-      const { error } = await supabase.from('events').delete().eq('id', id);
+      const { error } = await supabase.from('events').delete().eq('id', deleteTargetId);
       if (error) throw error;
       showToast('Invitation deleted successfully');
+      setDeleteTargetId(null);
       fetchInvites();
     } catch (err) {
       showToast('Delete failed', 'error');
+      setDeleteTargetId(null);
     }
   };
 
@@ -131,7 +134,7 @@ const MyInvites = () => {
                   <button onClick={() => fetchRsvps(invite)} title="View RSVPs" style={{ padding: '0.625rem', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #f1f5f9', cursor: 'pointer', color: '#6366f1' }}><Heart size={18} /></button>
                   <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/invite/${invite.id}`); showToast('Link Copied! 📋'); }} title="Share Link" style={{ padding: '0.625rem', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #f1f5f9', cursor: 'pointer', color: '#64748b' }}><Share2 size={18} /></button>
                   <button onClick={() => setActiveQrCode(invite)} title="Get QR Code" style={{ padding: '0.625rem', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #f1f5f9', cursor: 'pointer', color: '#10b981' }}><Sparkles size={18} /></button>
-                  <button onClick={() => handleDelete(invite.id)} title="Delete" style={{ padding: '0.625rem', borderRadius: '0.75rem', background: '#fef2f2', border: '1px solid #fee2e2', cursor: 'pointer', color: '#ef4444' }}><Trash2 size={18} /></button>
+                  <button onClick={() => setDeleteTargetId(invite.id)} title="Delete" style={{ padding: '0.625rem', borderRadius: '0.75rem', background: '#fef2f2', border: '1px solid #fee2e2', cursor: 'pointer', color: '#ef4444' }}><Trash2 size={18} /></button>
                 </div>
               </div>
 
@@ -236,6 +239,35 @@ const MyInvites = () => {
                   ))}
                 </div>
               )}
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Custom Delete Confirmation Modal */}
+      {deleteTargetId && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: '1rem' }}>
+          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: 'white', padding: '2.5rem', borderRadius: '2rem', textAlign: 'center', maxWidth: '400px', width: '100%' }}>
+            <div style={{ width: '60px', height: '60px', background: '#fef2f2', color: '#ef4444', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+              <Trash2 size={30} />
+            </div>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '0.5rem' }}>Delete Invitation?</h2>
+            <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '2rem', lineHeight: '1.5' }}>
+              Are you sure you want to permanently delete this invitation? This action cannot be undone and guests will no longer be able to access the page or RSVP.
+            </p>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button 
+                onClick={() => setDeleteTargetId(null)} 
+                style={{ flex: 1, padding: '1rem', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '1rem', fontWeight: 800, cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDelete} 
+                style={{ flex: 1, padding: '1rem', background: '#ef4444', color: 'white', border: 'none', borderRadius: '1rem', fontWeight: 800, cursor: 'pointer' }}
+              >
+                Delete
+              </button>
             </div>
           </motion.div>
         </div>
