@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Shield, Search, Loader2, CheckCircle2, XCircle, Clock, 
-  ExternalLink, User, Wallet, ArrowDownCircle, Lock, Unlock, Users 
+  ExternalLink, User, Wallet, ArrowDownCircle, Lock, Unlock, Users, Trash2 
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../context/ToastContext';
@@ -19,11 +19,8 @@ const AdminPanel = () => {
   const fetchAdminData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch Transactions
       const { data: txs } = await supabase.from('transactions').select('*').order('created_at', { ascending: false });
-      // 2. Fetch Payouts
       const { data: pays } = await supabase.from('payouts').select('*').order('created_at', { ascending: false });
-      // 3. Fetch Merchants
       const { data: merchs } = await supabase.from('merchants').select('*').order('updated_at', { ascending: false });
 
       setTransactions(txs || []);
@@ -73,6 +70,34 @@ const AdminPanel = () => {
     } catch (err) {
       showToast('Failed to unlock merchant', 'error');
     }
+  };
+
+  // GLOBAL DELETE ACTIONS
+  const handleDeleteTransaction = async (id) => {
+    if (!window.confirm('ADMIN: Permanent delete this transaction?')) return;
+    try {
+      await supabase.from('transactions').delete().eq('id', id);
+      showToast('Transaction deleted globally');
+      fetchAdminData();
+    } catch (err) { showToast('Delete failed', 'error'); }
+  };
+
+  const handleDeletePayout = async (id) => {
+    if (!window.confirm('ADMIN: Permanent delete this payout record?')) return;
+    try {
+      await supabase.from('payouts').delete().eq('id', id);
+      showToast('Payout deleted globally');
+      fetchAdminData();
+    } catch (err) { showToast('Delete failed', 'error'); }
+  };
+
+  const handleDeleteMerchant = async (id) => {
+    if (!window.confirm('ADMIN CRITICAL: Delete this merchant profile? All their settings will be lost.')) return;
+    try {
+      await supabase.from('merchants').delete().eq('id', id);
+      showToast('Merchant deleted globally');
+      fetchAdminData();
+    } catch (err) { showToast('Delete failed', 'error'); }
   };
 
   return (
@@ -126,11 +151,16 @@ const AdminPanel = () => {
                     <span style={{ fontSize: '0.75rem', fontWeight: 600, color: tx.status === 'Completed' ? '#10b981' : '#64748b' }}>{tx.status}</span>
                   </td>
                   <td style={{ padding: '1.25rem 1.5rem' }}>
-                    {tx.status !== 'Completed' && (
-                      <button onClick={() => handleUpdateTxStatus(tx.id, 'Completed')} style={{ padding: '0.4rem', borderRadius: '0.4rem', border: '1px solid #10b981', color: '#10b981', background: 'white', cursor: 'pointer' }}>
-                        Approve
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      {tx.status !== 'Completed' && (
+                        <button onClick={() => handleUpdateTxStatus(tx.id, 'Completed')} style={{ padding: '0.4rem', borderRadius: '0.4rem', border: '1px solid #10b981', color: '#10b981', background: 'white', cursor: 'pointer' }}>
+                          Approve
+                        </button>
+                      )}
+                      <button onClick={() => handleDeleteTransaction(tx.id)} style={{ padding: '0.4rem', borderRadius: '0.4rem', border: '1px solid #fee2e2', color: '#ef4444', background: '#fef2f2', cursor: 'pointer' }}>
+                        <Trash2 size={16} />
                       </button>
-                    )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -138,7 +168,6 @@ const AdminPanel = () => {
           </table>
         ) : activeTab === 'payouts' ? (
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            {/* Payouts Table Content... */}
             <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
               <tr>
                 <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontWeight: 600 }}>Merchant</th>
@@ -154,69 +183,60 @@ const AdminPanel = () => {
                   <td style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem' }}>{p.bank_name}</td>
                   <td style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontWeight: 700 }}>₹{p.amount.toLocaleString()}</td>
                   <td style={{ padding: '1.25rem 1.5rem' }}>
-                    {p.status === 'Pending' && (
-                      <button onClick={() => handleUpdatePayoutStatus(p.id, 'Paid')} style={{ padding: '0.5rem 1rem', borderRadius: '0.5rem', border: 'none', background: '#10b981', color: 'white', fontWeight: 600, cursor: 'pointer' }}>
-                        Mark Paid
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      {p.status === 'Pending' && (
+                        <button onClick={() => handleUpdatePayoutStatus(p.id, 'Paid')} style={{ padding: '0.5rem 1rem', borderRadius: '0.5rem', border: 'none', background: '#10b981', color: 'white', fontWeight: 600, cursor: 'pointer' }}>
+                          Mark Paid
+                        </button>
+                      )}
+                      <button onClick={() => handleDeletePayout(p.id)} style={{ padding: '0.4rem', borderRadius: '0.4rem', border: '1px solid #fee2e2', color: '#ef4444', background: '#fef2f2', cursor: 'pointer' }}>
+                        <Trash2 size={16} />
                       </button>
-                    )}
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         ) : (
-          /* MERCHANTS TAB - NEW */
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
               <tr>
-                <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontWeight: 600 }}>Business Name</th>
-                <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontWeight: 600 }}>Bank Status</th>
-                <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontWeight: 600 }}>Bank Details</th>
-                <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontWeight: 600 }}>Action</th>
+                <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontWeight: 600 }}>Merchant Name</th>
+                <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontWeight: 600 }}>VPA</th>
+                <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontWeight: 600 }}>Status</th>
+                <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontWeight: 600 }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {merchants.length === 0 ? (
-                <tr><td colSpan="4" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>No merchants found.</td></tr>
-              ) : (
-                merchants.map((m) => (
-                  <tr key={m.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '1.25rem 1.5rem' }}>
-                      <div style={{ fontSize: '0.875rem', fontWeight: 700 }}>{m.business_name || 'Unnamed Business'}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>ID: {m.id.slice(0, 12)}...</div>
-                    </td>
-                    <td style={{ padding: '1.25rem 1.5rem' }}>
-                      {m.is_locked ? (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#d97706', fontSize: '0.75rem', fontWeight: 700, background: '#fffbeb', padding: '0.25rem 0.75rem', borderRadius: '100px', width: 'fit-content' }}>
-                          <Lock size={12} /> LOCKED
-                        </span>
-                      ) : (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#10b981', fontSize: '0.75rem', fontWeight: 700, background: '#f0fdf4', padding: '0.25rem 0.75rem', borderRadius: '100px', width: 'fit-content' }}>
-                          <Unlock size={12} /> OPEN
-                        </span>
-                      )}
-                    </td>
-                    <td style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem' }}>
-                      <div style={{ color: '#64748b' }}>{m.bank_name || 'No Bank'}</div>
-                      <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{m.account_number || '---'}</div>
-                    </td>
-                    <td style={{ padding: '1.25rem 1.5rem' }}>
+              {merchants.map((m) => (
+                <tr key={m.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '1.25rem 1.5rem' }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.875rem' }}>{m.business_name || 'Unnamed Merchant'}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>#{m.id.slice(0, 8)}</div>
+                  </td>
+                  <td style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontFamily: 'monospace' }}>{m.upi_id || '---'}</td>
+                  <td style={{ padding: '1.25rem 1.5rem' }}>
+                    {m.is_locked ? (
+                      <span style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Lock size={12}/> Locked</span>
+                    ) : (
+                      <span style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Unlock size={12}/> Open</span>
+                    )}
+                  </td>
+                  <td style={{ padding: '1.25rem 1.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
                       {m.is_locked && (
-                        <button 
-                          onClick={() => handleUnlockMerchant(m.id)}
-                          style={{ 
-                            display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', 
-                            borderRadius: '0.5rem', border: '1px solid var(--primary)', 
-                            color: 'var(--primary)', background: 'white', fontWeight: 600, cursor: 'pointer' 
-                          }}
-                        >
-                          <Unlock size={14} /> Release Lock
+                        <button onClick={() => handleUnlockMerchant(m.id)} style={{ padding: '0.4rem', borderRadius: '0.4rem', border: '1px solid #10b981', color: '#10b981', background: 'white', cursor: 'pointer' }}>
+                          Unlock Bank
                         </button>
                       )}
-                    </td>
-                  </tr>
-                ))
-              )}
+                      <button onClick={() => handleDeleteMerchant(m.id)} title="Delete Merchant" style={{ padding: '0.4rem', borderRadius: '0.4rem', border: '1px solid #fee2e2', color: '#ef4444', background: '#fef2f2', cursor: 'pointer' }}>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         )}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Filter, Plus, Download, MoreVertical, Loader2, CheckCircle2, XCircle, Clock, Eye } from 'lucide-react';
+import { Search, Filter, Plus, Download, MoreVertical, Loader2, CheckCircle2, XCircle, Clock, Eye, Trash2, Calendar, Mail, FileText, User } from 'lucide-react';
 import api from '../lib/api';
 import { useToast } from '../context/ToastContext';
 import CreatePaymentModal from '../components/CreatePaymentModal';
@@ -8,6 +8,7 @@ import LoadingScreen from '../components/LoadingScreen';
 
 const Transactions = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTx, setSelectedTx] = useState(null);
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,11 +42,25 @@ const Transactions = () => {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this transaction? This action cannot be undone.')) return;
+    
+    try {
+      await api.delete(`/payments/${id}`);
+      showToast('Transaction deleted successfully');
+      fetchTransactionsData();
+    } catch (err) {
+      showToast('Failed to delete transaction', 'error');
+    }
+  };
+
   // Logic for search and filter
   const filteredTransactions = transactions.filter(tx => {
+    const email = tx.customer_email || '';
+    const utr = tx.utr_number || '';
     const matchesSearch = 
-      tx.customer_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (tx.utr_number && tx.utr_number.includes(searchTerm)) ||
+      email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      utr.includes(searchTerm) ||
       tx.amount.toString().includes(searchTerm);
     
     const matchesFilter = filterStatus === 'All' || tx.status === filterStatus;
@@ -119,8 +134,8 @@ const Transactions = () => {
 
         <div style={{ overflowX: 'auto' }}>
           {loading ? (
-            <div style={{ padding: '4rem' }}>
-              <LoadingScreen />
+            <div style={{ padding: '4rem', textAlign: 'center' }}>
+               <Loader2 className="animate-spin" size={32} style={{ margin: '0 auto', color: 'var(--primary)' }} />
             </div>
           ) : filteredTransactions.length === 0 ? (
             <div style={{ padding: '4rem', textAlign: 'center', color: '#64748b' }}>
@@ -143,7 +158,7 @@ const Transactions = () => {
                   return (
                     <tr key={tx.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                       <td style={{ padding: '1.25rem 1.5rem' }}>
-                        <div style={{ fontWeight: 700, fontSize: '0.875rem' }}>{tx.customer_email}</div>
+                        <div style={{ fontWeight: 700, fontSize: '0.875rem' }}>{tx.customer_email || 'No Email'}</div>
                         <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>#{tx.id.slice(0, 8)}</div>
                       </td>
                       <td style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', fontWeight: 700 }}>₹{tx.amount.toLocaleString()}</td>
@@ -157,7 +172,15 @@ const Transactions = () => {
                       </td>
                       <td style={{ padding: '1.25rem 1.5rem' }}>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          {tx.status === 'Pending Verification' ? (
+                          <button 
+                            onClick={() => setSelectedTx(tx)}
+                            style={{ padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid #e2e8f0', color: '#64748b', background: 'white', cursor: 'pointer' }}
+                            title="View Details"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          
+                          {tx.status === 'Pending Verification' && (
                             <>
                               <button 
                                 onClick={() => handleUpdateStatus(tx.id, 'Success')}
@@ -174,11 +197,15 @@ const Transactions = () => {
                                 <XCircle size={16} />
                               </button>
                             </>
-                          ) : (
-                            <button style={{ padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid #e2e8f0', color: '#64748b', background: 'white', cursor: 'pointer' }}>
-                              <Eye size={16} />
-                            </button>
                           )}
+
+                          <button 
+                            onClick={() => handleDelete(tx.id)}
+                            style={{ padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid #fee2e2', color: '#ef4444', background: '#fef2f2', cursor: 'pointer' }}
+                            title="Delete Transaction"
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -195,6 +222,73 @@ const Transactions = () => {
         onClose={() => setIsModalOpen(false)} 
         onRefresh={fetchTransactionsData}
       />
+
+      {/* View Transaction Modal */}
+      <AnimatePresence>
+        {selectedTx && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1rem' }}>
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              style={{ background: 'white', padding: '2rem', borderRadius: '1.5rem', width: '100%', maxWidth: '500px', position: 'relative' }}
+            >
+              <button onClick={() => setSelectedTx(null)} style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                <XCircle size={24} />
+              </button>
+
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, fontFamily: 'Outfit', marginBottom: '1.5rem' }}>Transaction Details</h3>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', background: '#f8fafc', borderRadius: '1rem' }}>
+                  <div style={{ width: '48px', height: '48px', background: 'var(--primary)', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <User size={24} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.875rem', color: '#64748b' }}>Customer Email</div>
+                    <div style={{ fontWeight: 700 }}>{selectedTx.customer_email || 'No Email Provided'}</div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '1rem' }}>
+                    <div style={{ fontSize: '0.875rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><FileText size={14} /> Amount</div>
+                    <div style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--primary)' }}>₹{selectedTx.amount}</div>
+                  </div>
+                  <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '1rem' }}>
+                    <div style={{ fontSize: '0.875rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Clock size={14} /> Status</div>
+                    <div style={{ fontWeight: 700 }}>{selectedTx.status}</div>
+                  </div>
+                </div>
+
+                <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '1rem' }}>
+                  <div style={{ fontSize: '0.875rem', color: '#64748b' }}>UTR / Reference Number</div>
+                  <div style={{ fontWeight: 700, fontFamily: 'monospace', letterSpacing: '0.05em' }}>{selectedTx.utr_number || 'Not Submitted Yet'}</div>
+                </div>
+
+                <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '1rem' }}>
+                  <div style={{ fontSize: '0.875rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Calendar size={14} /> Date & Time</div>
+                  <div style={{ fontWeight: 600 }}>{new Date(selectedTx.created_at).toLocaleString()}</div>
+                </div>
+
+                {selectedTx.description && (
+                  <div style={{ padding: '1rem', background: '#fffbeb', borderRadius: '1rem', border: '1px solid #fef3c7' }}>
+                    <div style={{ fontSize: '0.875rem', color: '#92400e', fontWeight: 600 }}>Description</div>
+                    <div style={{ fontSize: '0.875rem', color: '#92400e' }}>{selectedTx.description}</div>
+                  </div>
+                )}
+
+                <button 
+                  onClick={() => setSelectedTx(null)}
+                  style={{ width: '100%', padding: '1rem', background: '#1e293b', color: 'white', border: 'none', borderRadius: '1rem', fontWeight: 700, cursor: 'pointer', marginTop: '1rem' }}
+                >
+                  Close Details
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

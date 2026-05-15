@@ -86,4 +86,21 @@ router.get('/list', async (req, res) => {
   }
 });
 
+router.delete('/:id', async (req, res) => {
+  const supabase = req.app.get('supabase');
+  const { id } = req.params;
+
+  try {
+    const { error } = await supabase
+      .from('transactions')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    res.json({ success: true, message: 'Transaction deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;
