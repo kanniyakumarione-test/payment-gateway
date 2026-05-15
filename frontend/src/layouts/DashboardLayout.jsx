@@ -10,17 +10,23 @@ import {
   Search, 
   LogOut,
   ChevronRight,
-  Code
+  Code,
+  Shield
 } from 'lucide-react';
 import { auth, logout } from '../lib/firebase';
+import Logo from '../components/Logo';
+import { useToast } from '../context/ToastContext';
 
 const DashboardLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const user = auth.currentUser;
+  const isSuperAdmin = user?.email === 'kanniyakumarione@gmail.com';
 
   const handleLogout = async () => {
     await logout();
+    showToast('Logged out successfully', 'info');
     navigate('/login');
   };
 
@@ -32,6 +38,10 @@ const DashboardLayout = () => {
     { icon: <Code size={20} />, label: 'Developer Docs', path: '/dashboard/docs' },
     { icon: <Settings size={20} />, label: 'Settings', path: '/dashboard/settings' },
   ];
+
+  if (isSuperAdmin) {
+    menuItems.push({ icon: <Shield size={20} />, label: 'Admin Panel', path: '/dashboard/admin' });
+  }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc' }}>
@@ -46,9 +56,8 @@ const DashboardLayout = () => {
         height: '100vh',
         zIndex: 50
       }}>
-        <div style={{ padding: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', borderRadius: '8px' }} />
-          <span style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'Outfit' }}>AuraPay</span>
+        <div style={{ padding: '2rem' }}>
+          <Logo size={32} />
         </div>
 
         <nav style={{ flex: 1, padding: '0 1rem' }}>
@@ -122,10 +131,16 @@ const DashboardLayout = () => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-            <button style={{ position: 'relative', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}>
-              <Bell size={22} />
-              <span style={{ position: 'absolute', top: '-2px', right: '-2px', width: '8px', height: '8px', background: 'var(--danger)', borderRadius: '50%', border: '2px solid white' }} />
-            </button>
+            <div style={{ position: 'relative' }}>
+              <button 
+                onClick={() => showToast('You are all caught up!', 'success')}
+                style={{ position: 'relative', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+              >
+                <Bell size={22} />
+                <span style={{ position: 'absolute', top: '-2px', right: '-2px', width: '8px', height: '8px', background: 'var(--danger)', borderRadius: '50%', border: '2px solid white' }} />
+              </button>
+            </div>
+            
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{user?.displayName || 'Merchant'}</div>

@@ -48,7 +48,7 @@ const Login = () => {
           <div style={{ width: '48px', height: '48px', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', borderRadius: '12px' }} />
         </div>
         
-        <h1 style={{ fontSize: '2rem', fontWeight: 800, fontFamily: 'Outfit', marginBottom: '1rem' }}>Welcome to AuraPay</h1>
+        <h1 style={{ fontSize: '2rem', fontWeight: 800, fontFamily: 'Outfit', marginBottom: '1rem' }}>Welcome to KKPay</h1>
         <p style={{ color: '#64748b', marginBottom: '2.5rem' }}>Login to your merchant dashboard to manage your payments.</p>
 
         <button 

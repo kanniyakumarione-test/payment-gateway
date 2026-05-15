@@ -98,7 +98,7 @@ function Landing() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.5rem', fontWeight: 700, fontFamily: 'Outfit' }}>
                 <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', borderRadius: '8px' }} />
-                <span>AuraPay</span>
+                <span>KKPay</span>
               </div>
               <p style={{ marginTop: '1.5rem', color: 'var(--text-muted)', maxWidth: '250px' }}>Modern financial infrastructure for global businesses.</p>
             </div>
@@ -114,7 +114,7 @@ function Landing() {
             ))}
           </div>
           <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '2rem', display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-            <p>© 2026 AuraPay Inc. All rights reserved.</p>
+            <p>© 2026 KKPay Inc. All rights reserved.</p>
             <div style={{ display: 'flex', gap: '2rem' }}>
               <a href="#">Privacy</a>
               <a href="#">Terms</a>

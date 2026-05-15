@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
+import Logo from './Logo';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -28,12 +29,9 @@ const Navbar = () => {
       borderBottom: isScrolled ? '1px solid var(--glass-border)' : 'none'
     }}>
       <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.5rem', fontWeight: 700, fontFamily: 'Outfit' }}>
-          <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', borderRadius: '8px', position: 'relative' }}>
-            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '12px', height: '12px', background: 'white', borderRadius: '50%' }} />
-          </div>
-          <span>AuraPay</span>
-        </div>
+        <Link to="/" style={{ textDecoration: 'none' }}>
+          <Logo size={36} />
+        </Link>
         
         <div className="nav-links" style={{ display: 'flex', gap: '2.5rem' }}>
           {['Payments', 'Banking', 'Payroll', 'Pricing'].map(item => (

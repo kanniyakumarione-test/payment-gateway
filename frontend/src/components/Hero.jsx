@@ -25,13 +25,13 @@ const Hero = () => {
             display: 'inline-block', padding: '0.5rem 1rem', background: 'rgba(99, 102, 241, 0.1)', 
             color: 'var(--primary)', borderRadius: '100px', fontSize: '0.875rem', fontWeight: 600, marginBottom: '1.5rem' 
           }}>
-            New: AuraPay X is now live!
+            New: KKPay X is now live!
           </div>
           <h1 style={{ fontSize: '4rem', fontWeight: 800, marginBottom: '1.5rem', color: 'var(--bg-dark)', lineHeight: 1.1 }}>
             Payments infrastructure for the <span className="gradient-text">next generation</span>.
           </h1>
           <p style={{ fontSize: '1.25rem', color: 'var(--text-muted)', marginBottom: '2.5rem', maxWidth: '540px' }}>
-            Empower your business with AuraPay's suite of financial tools. From global checkouts to automated payroll, we handle the complexity so you can focus on growth.
+            Empower your business with KKPay's suite of financial tools. From global checkouts to automated payroll, we handle the complexity so you can focus on growth.
           </p>
           <div style={{ display: 'flex', gap: '1.5rem' }}>
             <button className="btn-primary" style={{ 
@@ -71,7 +71,7 @@ const Hero = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
               <Zap size={14} color="var(--primary)" /> Quick Payout
             </div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>$4,250.00</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>\u20B94,250.00</div>
             <div style={{ fontSize: '0.75rem', fontWeight: 600, padding: '0.25rem 0.5rem', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--accent)', borderRadius: '100px', display: 'inline-block', marginTop: '0.5rem' }}>
               Completed
             </div>

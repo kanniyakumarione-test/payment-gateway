@@ -23,12 +23,18 @@ app.use(express.json());
 // Routes
 const paymentRoutes = require('./routes/paymentRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
+const payoutRoutes = require('./routes/payoutRoutes');
+const customerRoutes = require('./routes/customerRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 app.use('/api/payments', paymentRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/payouts', payoutRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/', (req, res) => {
-  res.send('AuraPay Secure API is running...');
+  res.send('KKPay Secure API is running...');
 });
 
 app.listen(PORT, () => {
