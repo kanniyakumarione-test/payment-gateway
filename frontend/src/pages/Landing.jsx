@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Gift, PartyPopper, Sparkles, ChevronRight, Calendar, MapPin, Users } from 'lucide-react';
+import { Heart, Gift, PartyPopper, ChevronRight, Calendar, MapPin, Users } from 'lucide-react';
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -12,7 +12,7 @@ const Landing = () => {
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 5%', position: 'fixed', width: '100%', top: 0, background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)', zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.5rem', fontWeight: 900, fontFamily: 'Outfit', color: 'var(--primary)' }}>
           <div style={{ width: '40px', height: '40px', background: 'linear-gradient(135deg, #6366f1, #a855f7)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-            <Sparkles size={24} fill="currentColor" />
+            
           </div>
           KKDesign
         </div>
@@ -32,7 +32,7 @@ const Landing = () => {
           transition={{ duration: 0.8 }}
         >
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: '#fff0f0', color: '#ff6b6b', borderRadius: '100px', fontSize: '0.875rem', fontWeight: 700, marginBottom: '2rem' }}>
-            <Sparkles size={16} /> The Elite Invitation Platform
+             The Elite Invitation Platform
           </div>
           <h1 style={{ fontSize: 'clamp(3rem, 8vw, 5rem)', fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1.1, marginBottom: '1.5rem', maxWidth: '900px', margin: '0 auto 1.5rem' }}>
             Celebrate Moments, <br />

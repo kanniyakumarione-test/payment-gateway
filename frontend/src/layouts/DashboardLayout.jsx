@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Heart, Calendar, PlusCircle, Settings, LogOut, Menu, X, 
-  User, Bell, Sparkles, LayoutDashboard, Send
+  User, Bell, LayoutDashboard, Send
 } from 'lucide-react';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
@@ -47,7 +47,7 @@ const DashboardLayout = () => {
         <header style={{ background: 'white', padding: '1rem 1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
              <div style={{ width: '32px', height: '32px', background: '#6366f1', color: 'white', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-               <Sparkles size={18} fill="currentColor" />
+               
              </div>
              <span style={{ fontWeight: 900, fontFamily: 'Outfit', color: '#6366f1', fontSize: '1.125rem' }}>KKDesign</span>
           </div>
@@ -95,7 +95,7 @@ const DashboardLayout = () => {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '3rem', padding: '0 0.5rem' }}>
           <div style={{ width: '40px', height: '40px', background: '#6366f1', color: 'white', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Sparkles size={24} fill="currentColor" />
+            
           </div>
           {isSidebarOpen && <span style={{ fontSize: '1.25rem', fontWeight: 900, fontFamily: 'Outfit', color: '#6366f1' }}>KKDesign</span>}
         </div>

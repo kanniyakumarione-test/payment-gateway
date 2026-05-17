@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Sparkles, Calendar, Users, ChevronRight, Plus, Heart, MapPin, BarChart2, PieChart as PieChartIcon } from 'lucide-react';
+import { Calendar, Users, ChevronRight, Plus, Heart, MapPin, BarChart2, PieChart as PieChartIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { auth } from '../lib/firebase';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -84,7 +84,7 @@ const Overview = () => {
       {/* Stats Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '3rem' }}>
         {[
-          { label: 'Total Events', value: stats.total, icon: <Sparkles />, color: '#6366f1' },
+          { label: 'Total Events', value: stats.total, icon: <BarChart2 />, color: '#6366f1' },
           { label: 'Upcoming Events', value: stats.upcoming, icon: <Calendar />, color: '#10b981' },
           { label: 'Total Guests Attending', value: stats.totalGuests, icon: <Users />, color: '#f59e0b' }
         ].map((stat, i) => (

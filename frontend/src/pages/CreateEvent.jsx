@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Calendar, Clock, MapPin, User, Phone, Sparkles, Loader2, ChevronRight, Navigation, Layers } from 'lucide-react';
+import { Heart, Calendar, Clock, MapPin, User, Phone, Loader2, ChevronRight, Navigation, Layers } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { auth } from '../lib/firebase';
 import { useToast } from '../context/ToastContext';
@@ -268,7 +268,7 @@ const CreateEvent = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <label style={labelStyle}>Event Title</label>
             <div style={{ position: 'relative' }}>
-              <Sparkles size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#6366f1' }} />
+              
               <input type="text" required placeholder="e.g. Roshinth's Birthday" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} style={inputStyle} />
             </div>
           </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { auth, googleProvider } from '../lib/firebase';
 import { signInWithPopup } from 'firebase/auth';
 import { useToast } from '../context/ToastContext';
@@ -33,7 +33,7 @@ const Login = () => {
       >
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
           <div style={{ width: '64px', height: '64px', background: 'linear-gradient(135deg, #6366f1, #a855f7)', borderRadius: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-            <Sparkles size={32} fill="currentColor" />
+            
           </div>
         </div>
 

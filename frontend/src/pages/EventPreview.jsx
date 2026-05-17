@@ -1,32 +1,69 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
-import { Calendar, Clock, MapPin, User, Phone, Heart, Sparkles, Loader2, Music, Gift, Share2, Map as MapIcon, ChevronDown, Star } from 'lucide-react';
+import { motion, useScroll, useTransform, useSpring, useMotionValue, AnimatePresence } from 'framer-motion';
+import { Calendar, Clock, MapPin, User, Phone, Heart, Loader2, Music, Gift, Share2, Map as MapIcon, ChevronDown, Star, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 // Helper for Particles
 const Particles = ({ color }) => {
   return (
     <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 1, overflow: 'hidden' }}>
-      {[...Array(20)].map((_, i) => (
+      {[...Array(30)].map((_, i) => (
         <motion.div
           key={i}
-          initial={{ y: -100, x: Math.random() * window.innerWidth, rotate: 0 }}
+          initial={{ y: -100, x: Math.random() * window.innerWidth, rotate: 0, scale: 0 }}
           animate={{ 
             y: window.innerHeight + 100, 
             x: `calc(${Math.random() * 100}vw + ${Math.random() * 200 - 100}px)`,
-            rotate: 360 
+            rotate: 360,
+            scale: [0, 1, 0]
           }}
           transition={{ 
-            duration: Math.random() * 10 + 10, 
+            duration: Math.random() * 15 + 10, 
             repeat: Infinity, 
             ease: "linear",
             delay: Math.random() * 10
           }}
-          style={{ position: 'absolute', opacity: 0.2 }}
+          style={{ position: 'absolute', opacity: 0.3 }}
         >
-          {i % 2 === 0 ? <Heart size={Math.random() * 20 + 10} fill={color} color={color} /> : <Star size={Math.random() * 15 + 5} color={color} fill={color} />}
+          <div style={{
+            width: `${Math.random() * 6 + 2}px`,
+            height: `${Math.random() * 6 + 2}px`,
+            borderRadius: '50%',
+            background: color,
+            boxShadow: `0 0 10px ${color}`
+          }} />
         </motion.div>
+      ))}
+    </div>
+  );
+};
+
+// Ultra-Premium Floating 3D Orbs
+const FloatingOrbs = ({ theme, primary, accent }) => {
+  return (
+    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
+      {[primary, accent, primary, accent].map((color, i) => (
+        <motion.div
+          key={i}
+          animate={{
+            x: ['0vw', '100vw', '0vw'],
+            y: ['0vh', '100vh', '0vh'],
+            scale: [1, 2, 1],
+          }}
+          transition={{ duration: 30 + (i * 10), repeat: Infinity, ease: "linear", repeatType: "reverse" }}
+          style={{
+            position: 'absolute',
+            width: `${Math.random() * 600 + 300}px`,
+            height: `${Math.random() * 600 + 300}px`,
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${color} 0%, transparent 60%)`,
+            opacity: theme === 'midnight' ? 0.2 : 0.1,
+            filter: 'blur(80px)',
+            left: `${Math.random() * -20}%`,
+            top: `${Math.random() * -20}%`
+          }}
+        />
       ))}
     </div>
   );
@@ -39,10 +76,13 @@ const EventPreview = () => {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [rsvpData, setRsvpData] = useState({ guest_name: '', guest_count: 1, status: 'attending', dietary_restrictions: 'None', guest_message: '' });
   const [rsvpLoading, setRsvpLoading] = useState(false);
   const [rsvpSuccess, setRsvpSuccess] = useState(false);
+  const [isOpening, setIsOpening] = useState(false); // Envelope opening sequence
+  const [isOpened, setIsOpened] = useState(false); // Main content revealed
   
   // Gallery States
   const [photos, setPhotos] = useState([]);
@@ -119,6 +159,15 @@ const EventPreview = () => {
 
     return () => clearInterval(interval);
   }, [event]);
+
+  useEffect(() => {
+    if (isOpening) {
+      const timer = setTimeout(() => {
+        setIsOpened(true);
+      }, 2000); // 2 seconds for envelope to fully open and letter to rise before fading screen
+      return () => clearTimeout(timer);
+    }
+  }, [isOpening]);
 
   const compressImage = (file, maxKb = 100) => {
     return new Promise((resolve, reject) => {
@@ -308,13 +357,22 @@ const EventPreview = () => {
               setPasswordError(true);
             }
           }}>
-            <input 
-              type="password" 
-              placeholder="Enter Password" 
-              value={passwordInput}
-              onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false); }}
-              style={{ width: '100%', padding: '1rem', borderRadius: '1rem', border: `2px solid ${passwordError ? '#ef4444' : currentTheme.glassBorder}`, background: currentTheme.inputBg, color: currentTheme.inputText, outline: 'none', marginBottom: '1rem', textAlign: 'center', fontSize: '1rem', letterSpacing: '0.2em' }}
-            />
+            <div style={{ position: 'relative', width: '100%', marginBottom: '1rem' }}>
+              <input 
+                type={showPassword ? "text" : "password"} 
+                placeholder="Enter Password" 
+                value={passwordInput}
+                onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false); }}
+                style={{ width: '100%', padding: '1rem', borderRadius: '1rem', border: `2px solid ${passwordError ? '#ef4444' : currentTheme.glassBorder}`, background: currentTheme.inputBg, color: currentTheme.inputText, outline: 'none', textAlign: 'center', fontSize: '1rem', letterSpacing: '0.2em' }}
+              />
+              <button 
+                type="button" 
+                onClick={() => setShowPassword(!showPassword)}
+                style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: currentTheme.inputText, opacity: 0.6, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
             {passwordError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginBottom: '1rem', fontWeight: 700 }}>Incorrect password</p>}
             <button 
               type="submit" 
@@ -359,11 +417,101 @@ const EventPreview = () => {
   const venueInfo = event ? getVenueDetails(event.venue) : { address: '', mapUrl: '' };
 
   return (
-    <div ref={containerRef} style={{ background: currentTheme.bg, color: currentTheme.text, overflowX: 'hidden', perspective: '2000px', minHeight: '100vh' }}>
-      <Particles color={primaryColor} />
+    <div ref={containerRef} style={{ background: currentTheme.bg, color: currentTheme.text, overflowX: 'hidden', overflowY: isOpened ? 'auto' : 'hidden', height: isOpened ? 'auto' : '100vh', perspective: '2000px', minHeight: '100vh', scrollBehavior: 'smooth' }}>
       
-      {/* 1. HERO SECTION (3D Parallax Layer) */}
-      <section style={{ height: '100vh', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transformStyle: 'preserve-3d' }}>
+      <FloatingOrbs theme={theme} primary={primaryColor} accent={accentColor} />
+
+      {/* ENVELOPE REVEAL ANIMATION */}
+      <AnimatePresence>
+        {!isOpened && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 1.5, filter: 'blur(20px)' }}
+            transition={{ duration: 1.5, ease: "easeInOut" }}
+            style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `radial-gradient(circle at center, ${currentTheme.glass}, ${currentTheme.bg})` }}
+          >
+            {/* The Envelope Container */}
+            <motion.div 
+              animate={isOpening ? { y: 100 } : { y: 0 }} // Drop envelope slightly when letter rises
+              transition={{ duration: 1, delay: 0.5 }}
+              style={{ width: 'min(90vw, 500px)', height: 'min(60vw, 320px)', position: 'relative', perspective: '1500px' }}
+            >
+              
+              {/* Envelope Back */}
+              <div style={{ position: 'absolute', inset: 0, background: currentTheme.glass, backdropFilter: 'blur(20px)', borderRadius: '12px', border: `1px solid ${currentTheme.glassBorder}`, boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }} />
+
+              {/* The Letter inside */}
+              <motion.div 
+                initial={{ y: 0 }}
+                animate={isOpening ? { y: -180 } : { y: 0 }}
+                transition={{ duration: 1, delay: 0.6, type: 'spring', bounce: 0.2 }}
+                style={{ 
+                  position: 'absolute', inset: '10px', background: '#fdfbf7', borderRadius: '8px', zIndex: 2, 
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', 
+                  boxShadow: '0 0 30px rgba(0,0,0,0.3)', textAlign: 'center' 
+                }}
+              >
+                 <div style={{ fontSize: '1rem', color: accentColor, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '1rem', fontWeight: 800 }}>You're Invited</div>
+                 <h2 style={{ fontSize: '2rem', color: '#1a1a1a', fontFamily: 'Playfair Display', fontWeight: 900, lineHeight: 1.2, marginBottom: '0.5rem' }}>{event.title}</h2>
+              </motion.div>
+
+              {/* Envelope Front Flaps (Left, Right, Bottom) */}
+              <div style={{ position: 'absolute', inset: 0, zIndex: 3, overflow: 'hidden', borderRadius: '12px' }}>
+                 {/* Left Triangle */}
+                 <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: '50%', background: 'rgba(255,255,255,0.05)', clipPath: 'polygon(0 0, 100% 50%, 0 100%)', borderRight: `1px solid ${currentTheme.glassBorder}` }} />
+                 {/* Right Triangle */}
+                 <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: '50%', background: 'rgba(255,255,255,0.05)', clipPath: 'polygon(100% 0, 0 50%, 100% 100%)', borderLeft: `1px solid ${currentTheme.glassBorder}` }} />
+                 {/* Bottom Triangle */}
+                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '65%', background: 'rgba(255,255,255,0.08)', clipPath: 'polygon(0 100%, 50% 0, 100% 100%)', backdropFilter: 'blur(5px)', borderTop: `1px solid ${currentTheme.glassBorder}` }} />
+              </div>
+
+              {/* Top Flap (Opens up) */}
+              <motion.div
+                initial={{ rotateX: 0, zIndex: 4 }}
+                animate={isOpening ? { rotateX: 180, zIndex: 1 } : { rotateX: 0, zIndex: 4 }}
+                transition={{ duration: 0.6, ease: "easeInOut" }}
+                style={{ 
+                  position: 'absolute', top: 0, left: 0, right: 0, height: '60%', 
+                  background: 'rgba(255,255,255,0.12)', clipPath: 'polygon(0 0, 50% 100%, 100% 0)', 
+                  transformOrigin: 'top', backdropFilter: 'blur(10px)', 
+                  borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px',
+                  borderBottom: `1px solid ${currentTheme.glassBorder}`
+                }}
+              />
+
+              {/* Wax Seal Button */}
+              <motion.button 
+                animate={isOpening ? { scale: 0, opacity: 0 } : { scale: 1, opacity: 1 }}
+                transition={{ duration: 0.4 }}
+                onClick={() => setIsOpening(true)}
+                whileHover={{ scale: 1.1, boxShadow: `0 0 60px ${accentColor}` }}
+                style={{ 
+                  position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 5,
+                  width: '100px', height: '100px', borderRadius: '50%', background: accentColor, 
+                  border: `2px solid ${currentTheme.bg}`, color: currentTheme.bg, fontWeight: 900, cursor: 'pointer', 
+                  fontFamily: 'Playfair Display', fontSize: '1rem', display: 'flex', flexDirection: 'column', 
+                  alignItems: 'center', justifyContent: 'center', outline: 'none', 
+                  boxShadow: `0 10px 20px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,0,0,0.2)`
+                }}
+              >
+                 
+                 <span style={{ letterSpacing: '0.1em', fontSize: '0.75rem' }}>OPEN</span>
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0, y: 100 }}
+        animate={{ scale: isOpened ? 1 : 0.8, opacity: isOpened ? 1 : 0, y: isOpened ? 0 : 100 }}
+        transition={{ duration: 1.5, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        style={{ position: 'relative', zIndex: 2 }}
+      >
+        <Particles color={primaryColor} />
+      
+      {/* 1. CINEMATIC HERO SECTION */}
+      <section style={{ height: '100vh', width: '100vw', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
         <motion.div 
           style={{
             position: 'absolute',
@@ -371,160 +519,195 @@ const EventPreview = () => {
             background: event.image_url ? `url(${event.image_url})` : `url(https://images.unsplash.com/photo-${isWedding ? '1519225421118-df3d51945524' : '1530103862676-de30951306f3'}?auto=format&fit=crop&q=80)`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            opacity: 0.4,
-            translateZ: '-500px',
-            scale: 1.5,
+            opacity: 0.5,
+            translateZ: '-200px',
+            scale: 1.2,
           }}
         />
+        {/* Cinematic Gradient Overlay */}
+        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, transparent, ${currentTheme.bg})` }} />
 
         <motion.div 
           style={{ 
             width: '100%', 
-            maxWidth: '1000px', 
-            height: '85vh',
+            maxWidth: '1200px', 
+            padding: '2rem',
             position: 'relative',
-            rotateX: cardRotateX,
-            rotateY: cardRotateY,
-            scale: cardScale,
             zIndex: 10,
-            transformStyle: 'preserve-3d'
+            textAlign: 'center'
           }}
         >
-          {/* Main Invitation Card Body */}
-          <div style={{ 
-            position: 'absolute', inset: 0, 
-            background: currentTheme.glass, 
-            backdropFilter: 'blur(30px)', 
-            borderRadius: '4rem', 
-            border: `1px solid ${currentTheme.glassBorder}`,
-            overflow: 'hidden',
-            boxShadow: '0 50px 100px rgba(0,0,0,0.2)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: '4rem'
-          }}>
-            {/* Background Texture Overlay */}
-            <div style={{ position: 'absolute', inset: 0, opacity: theme === 'midnight' ? 0.1 : 0.4, backgroundImage: 'url("https://www.transparenttextures.com/patterns/natural-paper.png")', pointerEvents: 'none' }} />
-            
-            <motion.div style={{ position: 'relative', zIndex: 5, textAlign: 'center' }}>
-              <motion.div 
-                animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
-                transition={{ duration: 4, repeat: Infinity }}
-                style={{ width: '80px', height: '80px', background: currentTheme.glass, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2.5rem', border: `2px solid ${accentColor}` }}
-              >
-                {isWedding ? <Heart size={40} fill={primaryColor} color={primaryColor} /> : <Sparkles size={40} color={accentColor} />}
+            <motion.div 
+              initial={{ scale: 0, rotate: -180 }}
+              animate={isOpened ? { scale: 1, rotate: 0 } : {}}
+              transition={{ duration: 1.5, delay: 1, type: "spring", bounce: 0.4 }}
+              style={{ width: '100px', height: '100px', background: currentTheme.glass, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2rem', border: `2px solid ${accentColor}`, backdropFilter: 'blur(20px)' }}
+            >
+              <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }}>
+                <span style={{ fontSize: '3.5rem', fontFamily: 'Playfair Display, serif', fontWeight: 900, color: accentColor, lineHeight: 1 }}>
+                  {event.title ? event.title.charAt(0).toUpperCase() : 'E'}
+                </span>
               </motion.div>
-
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '0.4em', color: accentColor, marginBottom: '2rem', textTransform: 'uppercase' }}>
-                Join Us For The {event.type}
-              </h2>
-
-              <h1 style={{ 
-                fontSize: 'clamp(3rem, 10vw, 6rem)', 
-                fontWeight: 900, 
-                fontFamily: 'Playfair Display, serif', 
-                lineHeight: 1, 
-                marginBottom: '2rem',
-                background: `linear-gradient(to bottom, ${currentTheme.text}, ${accentColor})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                textShadow: theme === 'midnight' ? '0 20px 40px rgba(0,0,0,0.3)' : 'none'
-              }}>
-                {event.title}
-              </h1>
-
-              {/* LIVE COUNTDOWN */}
-              {timeLeft && (
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '2.5rem' }}>
-                  {[
-                    { label: 'Days', value: timeLeft.days },
-                    { label: 'Hours', value: timeLeft.hours },
-                    { label: 'Mins', value: timeLeft.minutes },
-                    { label: 'Secs', value: timeLeft.seconds }
-                  ].map((unit, i) => (
-                    <div key={i} style={{ background: currentTheme.glass, backdropFilter: 'blur(10px)', border: `1px solid ${currentTheme.glassBorder}`, padding: '0.75rem 1.5rem', borderRadius: '1rem', minWidth: '80px' }}>
-                      <div style={{ fontSize: '1.75rem', fontWeight: 900, color: currentTheme.text }}>{String(unit.value).padStart(2, '0')}</div>
-                      <div style={{ fontSize: '0.65rem', fontWeight: 800, color: accentColor, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{unit.label}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div style={{ fontSize: '1.5rem', color: currentTheme.text, opacity: 0.8, fontStyle: 'italic', maxWidth: '600px', margin: '0 auto 4rem', lineHeight: 1.6 }}>
-                "{event.description}"
-              </div>
-
-              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '3rem' }}>
-                <div>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: accentColor, marginBottom: '0.5rem', letterSpacing: '0.2em' }}>WHEN</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{new Date(event.event_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</div>
-                  <div style={{ opacity: 0.6 }}>at {formatTime(event.event_time)}</div>
-                </div>
-                <div style={{ width: '1px', height: '50px', background: 'rgba(255,255,255,0.1)' }} />
-                <div>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: accentColor, marginBottom: '0.5rem', letterSpacing: '0.2em' }}>WHERE</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{venueInfo.address.split(',')[0]}</div>
-                  <div style={{ opacity: 0.6 }}>The Celebration Awaits</div>
-                </div>
-              </div>
             </motion.div>
-          </div>
 
-          {/* Floating Luxury Elements (3D Layers) */}
-          <motion.div style={{ position: 'absolute', top: '-40px', right: '-40px', zIndex: 11, translateZ: '100px' }}>
-             <div style={{ width: '120px', height: '120px', borderRadius: '50%', background: `radial-gradient(circle at top left, ${accentColor}, transparent)`, filter: 'blur(40px)', opacity: 0.6 }} />
-          </motion.div>
+            <motion.h2 
+              initial={{ opacity: 0, y: 20 }}
+              animate={isOpened ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 1, delay: 1.2 }}
+              style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '0.5em', color: accentColor, marginBottom: '1rem', textTransform: 'uppercase' }}
+            >
+              Join Us For The {event.type}
+            </motion.h2>
+
+            <h1 style={{ 
+              fontSize: 'clamp(4rem, 12vw, 8rem)', 
+              fontWeight: 900, 
+              fontFamily: 'Playfair Display, serif', 
+              lineHeight: 1.1, 
+              marginBottom: '2rem',
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              textShadow: theme === 'midnight' ? '0 20px 50px rgba(0,0,0,0.5)' : 'none'
+            }}>
+              {event.title.split(' ').map((word, wordIndex) => (
+                <span key={wordIndex} style={{ display: 'inline-block', marginRight: '1rem' }}>
+                  {word.split('').map((char, charIndex) => (
+                    <motion.span
+                      key={charIndex}
+                      initial={{ opacity: 0, y: 50, rotateX: -90 }}
+                      animate={isOpened ? { opacity: 1, y: 0, rotateX: 0 } : {}}
+                      transition={{ duration: 0.8, delay: 1.5 + (wordIndex * 0.1) + (charIndex * 0.05), ease: "easeOut" }}
+                      style={{ 
+                        display: 'inline-block',
+                        background: `linear-gradient(to bottom, ${currentTheme.text}, ${accentColor})`,
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        paddingBottom: '0.2em',
+                        marginBottom: '-0.2em'
+                      }}
+                    >
+                      {char}
+                    </motion.span>
+                  ))}
+                </span>
+              ))}
+            </h1>
+
+            {/* LIVE COUNTDOWN */}
+            {timeLeft && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={isOpened ? { opacity: 1, scale: 1 } : {}}
+                transition={{ duration: 1, delay: 2.5 }}
+                style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginBottom: '3rem', flexWrap: 'wrap' }}
+              >
+                {[
+                  { label: 'Days', value: timeLeft.days },
+                  { label: 'Hours', value: timeLeft.hours },
+                  { label: 'Mins', value: timeLeft.minutes },
+                  { label: 'Secs', value: timeLeft.seconds }
+                ].map((unit, i) => (
+                  <motion.div 
+                    whileHover={{ y: -10, scale: 1.05 }}
+                    key={i} 
+                    style={{ background: currentTheme.glass, backdropFilter: 'blur(20px)', border: `1px solid ${currentTheme.glassBorder}`, padding: '1rem 2rem', borderRadius: '1.5rem', minWidth: '100px', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}
+                  >
+                    <div style={{ fontSize: '2.5rem', fontWeight: 900, color: currentTheme.text, fontFamily: 'Outfit' }}>{String(unit.value).padStart(2, '0')}</div>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: accentColor, textTransform: 'uppercase', letterSpacing: '0.15em' }}>{unit.label}</div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
         </motion.div>
       </section>
 
-      {/* 2. GLASS-DETAILS SECTION */}
-      <section style={{ padding: '10rem 5%', position: 'relative', zIndex: 12 }}>
+      {/* 2. DESCRIPTION & DETAILS (Immersive Cards) */}
+      <section style={{ padding: '5rem 5% 10rem', position: 'relative', zIndex: 12 }}>
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          style={{ scale: storyScale, opacity: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem', maxWidth: '1200px', margin: '0 auto' }}
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 1 }}
+          style={{ maxWidth: '800px', margin: '0 auto 6rem', textAlign: 'center' }}
+        >
+            <h3 style={{ fontSize: '2rem', fontWeight: 900, fontFamily: 'Playfair Display, serif', marginBottom: '2rem', color: currentTheme.text }}>The Celebration</h3>
+            <div style={{ fontSize: '1.5rem', color: currentTheme.text, opacity: 0.8, fontStyle: 'italic', lineHeight: 1.8 }}>
+              "{event.description}"
+            </div>
+        </motion.div>
+
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={{
+            hidden: { opacity: 0 },
+            visible: { opacity: 1, transition: { staggerChildren: 0.2 } }
+          }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem', maxWidth: '1200px', margin: '0 auto' }}
         >
           {/* Card 1: Time */}
-          <div style={{ padding: '3rem', borderRadius: '3rem', background: currentTheme.glass, backdropFilter: 'blur(20px)', border: `1px solid ${currentTheme.glassBorder}`, textAlign: 'center' }}>
-            <div style={{ width: '70px', height: '70px', background: currentTheme.glass, borderRadius: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2rem', color: primaryColor }}>
-              <Clock size={32} />
-            </div>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '1rem' }}>Timed Perfection</h3>
-            <p style={{ color: '#94a3b8' }}>Arrival at {formatTime(event.event_time)}. We encourage everyone to be seated by the start.</p>
-          </div>
+          <motion.div 
+            variants={{ hidden: { opacity: 0, y: 50 }, visible: { opacity: 1, y: 0 } }}
+            whileHover={{ y: -15, scale: 1.02, boxShadow: `0 40px 80px rgba(0,0,0,0.4)` }}
+            transition={{ duration: 0.4 }}
+            style={{ padding: '4rem 3rem', borderRadius: '3rem', background: currentTheme.glass, backdropFilter: 'blur(30px)', border: `1px solid ${currentTheme.glassBorder}`, textAlign: 'center', cursor: 'default' }}
+          >
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} style={{ width: '80px', height: '80px', background: currentTheme.glass, borderRadius: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2.5rem', color: primaryColor, border: `1px solid ${currentTheme.glassBorder}` }}>
+              <Clock size={36} />
+            </motion.div>
+            <h3 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '1rem', fontFamily: 'Playfair Display' }}>Date & Time</h3>
+            <div style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: accentColor }}>{new Date(event.event_date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+            <p style={{ opacity: 0.8, fontSize: '1.125rem' }}>Arrival at {formatTime(event.event_time)}</p>
+          </motion.div>
 
           {/* Card 2: Venue */}
-          <div style={{ padding: '3rem', borderRadius: '3rem', background: currentTheme.glass, backdropFilter: 'blur(20px)', border: `1px solid ${currentTheme.glassBorder}`, textAlign: 'center' }}>
-            <div style={{ width: '70px', height: '70px', background: currentTheme.glass, borderRadius: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2rem', color: '#38bdf8' }}>
-              <MapPin size={32} />
-            </div>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '1rem' }}>The Grand Venue</h3>
-            <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>{venueInfo.address}</p>
+          <motion.div 
+            variants={{ hidden: { opacity: 0, y: 50 }, visible: { opacity: 1, y: 0 } }}
+            whileHover={{ y: -15, scale: 1.02, boxShadow: `0 40px 80px rgba(0,0,0,0.4)` }}
+            transition={{ duration: 0.4 }}
+            style={{ padding: '4rem 3rem', borderRadius: '3rem', background: currentTheme.glass, backdropFilter: 'blur(30px)', border: `1px solid ${currentTheme.glassBorder}`, textAlign: 'center', cursor: 'default' }}
+          >
+            <motion.div animate={{ y: [-5, 5, -5] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} style={{ width: '80px', height: '80px', background: currentTheme.glass, borderRadius: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2.5rem', color: '#38bdf8', border: `1px solid ${currentTheme.glassBorder}` }}>
+              <MapPin size={36} />
+            </motion.div>
+            <h3 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '1rem', fontFamily: 'Playfair Display' }}>The Venue</h3>
+            <p style={{ opacity: 0.8, fontSize: '1.125rem', marginBottom: '2rem' }}>{venueInfo.address}</p>
             <button 
               onClick={() => window.open(venueInfo.mapUrl, '_blank')}
-              style={{ marginTop: '1.5rem', padding: '0.75rem 1.5rem', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '100px', color: 'white', fontWeight: 700, cursor: 'pointer' }}
+              style={{ padding: '1rem 2rem', background: 'transparent', border: `2px solid ${accentColor}`, borderRadius: '100px', color: currentTheme.text, fontWeight: 800, cursor: 'pointer', transition: 'all 0.3s ease' }}
+              onMouseOver={(e) => { e.currentTarget.style.background = accentColor; e.currentTarget.style.color = currentTheme.bg; e.currentTarget.style.transform = 'scale(1.05)'; }}
+              onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = currentTheme.text; e.currentTarget.style.transform = 'scale(1)'; }}
             >
-              Map Navigation
+              Get Directions
             </button>
-          </div>
+          </motion.div>
 
           {/* Card 3: Host Info */}
-          <div style={{ padding: '3rem', borderRadius: '3rem', background: currentTheme.glass, backdropFilter: 'blur(20px)', border: `1px solid ${currentTheme.glassBorder}`, textAlign: 'center' }}>
-            <div style={{ width: '70px', height: '70px', background: currentTheme.glass, borderRadius: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2rem', color: '#a78bfa' }}>
-              <User size={32} />
+          <motion.div 
+            variants={{ hidden: { opacity: 0, y: 50 }, visible: { opacity: 1, y: 0 } }}
+            whileHover={{ y: -15, scale: 1.02, boxShadow: `0 40px 80px rgba(0,0,0,0.4)` }}
+            transition={{ duration: 0.4 }}
+            style={{ padding: '4rem 3rem', borderRadius: '3rem', background: currentTheme.glass, backdropFilter: 'blur(30px)', border: `1px solid ${currentTheme.glassBorder}`, textAlign: 'center', cursor: 'default' }}
+          >
+            <div style={{ width: '80px', height: '80px', background: currentTheme.glass, borderRadius: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2.5rem', color: '#a78bfa', border: `1px solid ${currentTheme.glassBorder}` }}>
+              <User size={36} />
             </div>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '1rem' }}>Your Hosts</h3>
-            <p style={{ opacity: 0.8, marginBottom: '0.5rem' }}>{event.host_name}</p>
-            <p style={{ opacity: 0.8 }}>{event.contact_number}</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1.5rem' }}>
-              <button 
+            <h3 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '1rem', fontFamily: 'Playfair Display' }}>Your Hosts</h3>
+            <p style={{ opacity: 0.8, fontSize: '1.125rem', marginBottom: '0.5rem' }}>{event.host_name}</p>
+            <p style={{ opacity: 0.8, fontSize: '1.125rem', marginBottom: '2rem' }}>{event.contact_number}</p>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <motion.button 
+                whileHover={{ scale: 1.1, rotate: 10, background: accentColor, color: currentTheme.bg }}
                 onClick={() => window.open(`tel:${event.contact_number}`)}
-                style={{ padding: '0.75rem 1.5rem', background: currentTheme.glass, border: 'none', borderRadius: '100px', color: currentTheme.text, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                style={{ width: '50px', height: '50px', borderRadius: '50%', background: currentTheme.glass, border: `1px solid ${currentTheme.glassBorder}`, color: currentTheme.text, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s' }}
               >
-                <Phone size={16} /> Contact Host
-              </button>
-              <button 
+                <Phone size={20} />
+              </motion.button>
+              <motion.button 
+                whileHover={{ scale: 1.1, rotate: -10, background: accentColor, color: currentTheme.bg }}
                 onClick={() => {
                   if (navigator.share) {
                     navigator.share({ title: event.title, text: event.description, url: window.location.href });
@@ -533,29 +716,46 @@ const EventPreview = () => {
                     alert('Link Copied! 🔗');
                   }
                 }}
-                style={{ padding: '0.75rem 1.5rem', background: 'transparent', border: `1px solid ${currentTheme.glassBorder}`, borderRadius: '100px', color: currentTheme.text, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                style={{ width: '50px', height: '50px', borderRadius: '50%', background: currentTheme.glass, border: `1px solid ${currentTheme.glassBorder}`, color: currentTheme.text, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s' }}
               >
-                <Share2 size={16} /> Share Link
-              </button>
+                <Share2 size={20} />
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
       </section>
 
-      {/* 3. DIGITAL RSVP SECTION */}
-      <section style={{ padding: '5rem 5% 10rem', position: 'relative', zIndex: 12 }}>
-        <div style={{ maxWidth: '600px', margin: '0 auto', background: currentTheme.glass, backdropFilter: 'blur(20px)', border: `1px solid ${currentTheme.glassBorder}`, padding: '3rem', borderRadius: '3rem' }}>
-          <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-            <h2 style={{ fontSize: '2.5rem', fontWeight: 900, fontFamily: 'Playfair Display, serif', marginBottom: '1rem' }}>Digital RSVP</h2>
-            <p style={{ opacity: 0.8 }}>Kindly respond to secure your presence.</p>
+      {/* 3. PREMIUM RSVP SECTION */}
+      <section id="rsvp-section" style={{ padding: '5rem 5% 10rem', position: 'relative', zIndex: 12 }}>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9, rotateX: 20 }}
+          whileInView={{ opacity: 1, scale: 1, rotateX: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 1, type: "spring" }}
+          style={{ 
+            maxWidth: '900px', margin: '0 auto', 
+            background: currentTheme.glass, 
+            backdropFilter: 'blur(40px)', 
+            padding: 'clamp(1.5rem, 5vw, 4rem)', 
+            borderRadius: '2rem', 
+            boxShadow: `0 50px 100px rgba(0,0,0,0.4), inset 0 0 0 2px ${accentColor}`,
+            position: 'relative',
+            overflow: 'hidden'
+          }}
+        >
+          <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+            <h2 style={{ fontSize: '3.5rem', fontWeight: 900, fontFamily: 'Playfair Display, serif', marginBottom: '1rem', color: accentColor }}>Digital RSVP</h2>
+            <p style={{ opacity: 0.8, fontSize: '1.25rem', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Kindly Confirm Your Attendance</p>
           </div>
 
           {rsvpSuccess ? (
-            <div style={{ textAlign: 'center', padding: '2rem', background: 'rgba(34, 197, 94, 0.1)', borderRadius: '1.5rem', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
-              <Sparkles size={40} color="#22c55e" style={{ margin: '0 auto 1rem' }} />
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#22c55e', marginBottom: '0.5rem' }}>Thank You!</h3>
-              <p style={{ color: '#94a3b8' }}>Your response has been securely sent to the host.</p>
-            </div>
+            <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ textAlign: 'center', padding: '3rem', background: 'rgba(34, 197, 94, 0.1)', borderRadius: '2rem', border: '2px solid rgba(34, 197, 94, 0.4)' }}>
+              <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ duration: 0.5, repeat: 3 }}>
+                 
+              </motion.div>
+              <h3 style={{ fontSize: '2.5rem', fontWeight: 900, color: '#22c55e', marginBottom: '1rem', fontFamily: 'Playfair Display' }}>RSVP Confirmed</h3>
+              <p style={{ opacity: 0.8, fontSize: '1.25rem' }}>Your response has been securely processed.</p>
+            </motion.div>
           ) : (
             <form onSubmit={async (e) => {
               e.preventDefault();
@@ -576,102 +776,147 @@ const EventPreview = () => {
               } finally {
                 setRsvpLoading(false);
               }
-            }} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            }} style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem', padding: '0' }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 700, fontSize: '0.875rem', opacity: 0.8 }}>Full Name</label>
-                <input required type="text" placeholder="John Doe" value={rsvpData.guest_name} onChange={e => setRsvpData({...rsvpData, guest_name: e.target.value})} style={{ width: '100%', padding: '1rem', background: currentTheme.inputBg, border: `1px solid ${currentTheme.glassBorder}`, borderRadius: '1rem', color: currentTheme.inputText, outline: 'none' }} />
+                <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 800, fontSize: '0.875rem', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.1em', color: accentColor }}>Guest Name</label>
+                <input required type="text" placeholder="Enter full name" value={rsvpData.guest_name} onChange={e => setRsvpData({...rsvpData, guest_name: e.target.value})} style={{ width: '100%', padding: '1.25rem', background: 'transparent', border: 'none', borderBottom: `2px solid ${currentTheme.glassBorder}`, color: currentTheme.text, outline: 'none', fontSize: '1.5rem', fontFamily: 'Playfair Display', transition: 'border 0.3s' }} onFocus={(e) => e.target.style.borderColor = accentColor} onBlur={(e) => e.target.style.borderColor = currentTheme.glassBorder} />
               </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 700, fontSize: '0.875rem', opacity: 0.8 }}>Guests</label>
-                  <select value={rsvpData.guest_count} onChange={e => setRsvpData({...rsvpData, guest_count: parseInt(e.target.value)})} style={{ width: '100%', padding: '1rem', background: currentTheme.inputBg, border: `1px solid ${currentTheme.glassBorder}`, borderRadius: '1rem', color: currentTheme.inputText, outline: 'none' }}>
-                    {[1,2,3,4,5].map(n => <option key={n} value={n} style={{ color: currentTheme.text === '#ffffff' ? 'black' : 'black' }}>{n}</option>)}
+                  <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 800, fontSize: '0.875rem', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.1em', color: accentColor }}>Party Size</label>
+                  <select value={rsvpData.guest_count} onChange={e => setRsvpData({...rsvpData, guest_count: parseInt(e.target.value)})} style={{ width: '100%', padding: '1.25rem', background: 'transparent', border: 'none', borderBottom: `2px solid ${currentTheme.glassBorder}`, color: currentTheme.text, outline: 'none', fontSize: '1.5rem', fontFamily: 'Playfair Display', transition: 'border 0.3s', cursor: 'pointer' }}>
+                    {[1,2,3,4,5].map(n => <option key={n} value={n} style={{ background: currentTheme.bg }}>{n} Guest{n>1?'s':''}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 700, fontSize: '0.875rem', opacity: 0.8 }}>Will you attend?</label>
-                  <select value={rsvpData.status} onChange={e => setRsvpData({...rsvpData, status: e.target.value})} style={{ width: '100%', padding: '1rem', background: currentTheme.inputBg, border: `1px solid ${currentTheme.glassBorder}`, borderRadius: '1rem', color: currentTheme.inputText, outline: 'none' }}>
-                    <option value="attending" style={{ color: currentTheme.text === '#ffffff' ? 'black' : 'black' }}>Joyfully Accepts</option>
-                    <option value="declined" style={{ color: currentTheme.text === '#ffffff' ? 'black' : 'black' }}>Regretfully Declines</option>
+                  <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 800, fontSize: '0.875rem', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.1em', color: accentColor }}>Attendance</label>
+                  <select value={rsvpData.status} onChange={e => setRsvpData({...rsvpData, status: e.target.value})} style={{ width: '100%', padding: '1.25rem', background: 'transparent', border: 'none', borderBottom: `2px solid ${currentTheme.glassBorder}`, color: currentTheme.text, outline: 'none', fontSize: '1.5rem', fontFamily: 'Playfair Display', transition: 'border 0.3s', cursor: 'pointer' }}>
+                    <option value="attending" style={{ background: currentTheme.bg }}>Joyfully Accepts</option>
+                    <option value="declined" style={{ background: currentTheme.bg }}>Regretfully Declines</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 700, fontSize: '0.875rem', opacity: 0.8 }}>Dietary Restrictions (Optional)</label>
-                <input type="text" placeholder="e.g. Vegetarian, Nut Allergy" value={rsvpData.dietary_restrictions} onChange={e => setRsvpData({...rsvpData, dietary_restrictions: e.target.value})} style={{ width: '100%', padding: '1rem', background: currentTheme.inputBg, border: `1px solid ${currentTheme.glassBorder}`, borderRadius: '1rem', color: currentTheme.inputText, outline: 'none' }} />
+                <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 800, fontSize: '0.875rem', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.1em', color: accentColor }}>Dietary Restrictions (Optional)</label>
+                <input type="text" placeholder="e.g. Vegetarian, Nut Allergy" value={rsvpData.dietary_restrictions} onChange={e => setRsvpData({...rsvpData, dietary_restrictions: e.target.value})} style={{ width: '100%', padding: '1.25rem', background: 'transparent', border: 'none', borderBottom: `2px solid ${currentTheme.glassBorder}`, color: currentTheme.text, outline: 'none', fontSize: '1.25rem', fontFamily: 'Outfit', transition: 'border 0.3s' }} onFocus={(e) => e.target.style.borderColor = accentColor} onBlur={(e) => e.target.style.borderColor = currentTheme.glassBorder} />
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 700, fontSize: '0.875rem', opacity: 0.8 }}>Message for the Host (Optional)</label>
-                <textarea placeholder="Can't wait to celebrate!" value={rsvpData.guest_message} onChange={e => setRsvpData({...rsvpData, guest_message: e.target.value})} style={{ width: '100%', padding: '1rem', background: currentTheme.inputBg, border: `1px solid ${currentTheme.glassBorder}`, borderRadius: '1rem', color: currentTheme.inputText, outline: 'none', resize: 'none', minHeight: '80px' }} />
+                <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 800, fontSize: '0.875rem', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.1em', color: accentColor }}>Message for the Host (Optional)</label>
+                <textarea placeholder="Can't wait to celebrate!" value={rsvpData.guest_message} onChange={e => setRsvpData({...rsvpData, guest_message: e.target.value})} style={{ width: '100%', padding: '1.25rem', background: 'transparent', border: 'none', borderBottom: `2px solid ${currentTheme.glassBorder}`, color: currentTheme.text, outline: 'none', resize: 'none', minHeight: '80px', fontSize: '1.25rem', fontFamily: 'Outfit', transition: 'border 0.3s' }} onFocus={(e) => e.target.style.borderColor = accentColor} onBlur={(e) => e.target.style.borderColor = currentTheme.glassBorder} />
               </div>
 
-              <button disabled={rsvpLoading} type="submit" style={{ marginTop: '1rem', width: '100%', padding: '1.25rem', background: primaryColor, color: currentTheme.text === '#000000' ? '#ffffff' : '#ffffff', border: 'none', borderRadius: '1rem', fontWeight: 800, fontSize: '1.125rem', cursor: 'pointer', display: 'flex', justifyContent: 'center' }}>
-                {rsvpLoading ? <Loader2 className="animate-spin" /> : 'Send RSVP'}
-              </button>
+              <motion.button 
+                whileHover={{ scale: 1.05, boxShadow: `0 20px 40px ${primaryColor}80` }}
+                whileTap={{ scale: 0.95 }}
+                disabled={rsvpLoading} type="submit" 
+                style={{ marginTop: '3rem', width: '100%', padding: '1.25rem', background: `linear-gradient(135deg, ${primaryColor}, ${accentColor})`, color: '#ffffff', border: 'none', borderRadius: '1rem', fontWeight: 900, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer', display: 'flex', justifyContent: 'center' }}
+              >
+                {rsvpLoading ? <Loader2 className="animate-spin" /> : 'Confirm Reservation'}
+              </motion.button>
             </form>
           )}
-        </div>
+        </motion.div>
       </section>
 
-      {/* 4. COLLABORATIVE GUEST GALLERY */}
-      <section style={{ padding: '5rem 5%', position: 'relative', zIndex: 12 }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-            <h2 style={{ fontSize: '2.5rem', fontWeight: 900, fontFamily: 'Playfair Display, serif', marginBottom: '1rem' }}>Memories & Gallery</h2>
-            <p style={{ opacity: 0.8, maxWidth: '600px', margin: '0 auto' }}>Share your favorite moments from the celebration. Upload photos directly from your phone to add to the host's digital album.</p>
-          </div>
+      {/* 4. COLLABORATIVE GUEST GALLERY - Only shown after the event starts/ends */}
+      {timeLeft === null && (
+        <section style={{ padding: '5rem 5%', position: 'relative', zIndex: 12 }}>
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            style={{ maxWidth: '1200px', margin: '0 auto' }}
+          >
+            <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+              <h2 style={{ fontSize: '3.5rem', fontWeight: 900, fontFamily: 'Playfair Display, serif', marginBottom: '1rem', color: accentColor }}>Memories & Gallery</h2>
+              <p style={{ opacity: 0.8, maxWidth: '600px', margin: '0 auto', fontSize: '1.125rem' }}>The celebration may be over, but the memories last forever. Share your favorite moments and photos from the event!</p>
+            </div>
 
-          <div style={{ background: currentTheme.glass, backdropFilter: 'blur(20px)', border: `1px solid ${currentTheme.glassBorder}`, padding: '2rem', borderRadius: '2rem', marginBottom: '3rem', maxWidth: '600px', margin: '0 auto 3rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ background: currentTheme.glass, backdropFilter: 'blur(30px)', border: `1px solid ${currentTheme.glassBorder}`, padding: '3rem', borderRadius: '3rem', marginBottom: '4rem', maxWidth: '800px', margin: '0 auto 4rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', boxShadow: '0 30px 60px rgba(0,0,0,0.1)' }}>
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 700, fontSize: '0.875rem', opacity: 0.8 }}>Your Name</label>
-              <input type="text" placeholder="Who is sharing this memory?" value={uploaderName} onChange={e => setUploaderName(e.target.value)} style={{ width: '100%', padding: '1rem', background: currentTheme.inputBg, border: `1px solid ${currentTheme.glassBorder}`, borderRadius: '1rem', color: currentTheme.inputText, outline: 'none' }} />
+              <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 800, fontSize: '0.875rem', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Your Name</label>
+              <input type="text" placeholder="Who is sharing this memory?" value={uploaderName} onChange={e => setUploaderName(e.target.value)} style={{ width: '100%', padding: '1.25rem', background: currentTheme.inputBg, border: `2px solid ${currentTheme.glassBorder}`, borderRadius: '1rem', color: currentTheme.inputText, outline: 'none', fontSize: '1.125rem' }} />
             </div>
             <div style={{ position: 'relative' }}>
               <input type="file" accept="image/*" onChange={handlePhotoUpload} disabled={uploadingPhoto} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: uploadingPhoto ? 'not-allowed' : 'pointer', zIndex: 2 }} />
-              <button disabled={uploadingPhoto} style={{ width: '100%', padding: '1.25rem', background: 'transparent', border: `2px dashed ${primaryColor}`, color: currentTheme.text, borderRadius: '1rem', fontWeight: 800, fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+              <button disabled={uploadingPhoto} style={{ width: '100%', padding: '1.5rem', background: 'transparent', border: `2px dashed ${primaryColor}`, color: currentTheme.text, borderRadius: '1rem', fontWeight: 800, fontSize: '1.125rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', transition: 'all 0.3s' }} onMouseOver={(e) => { e.currentTarget.style.background = currentTheme.glass; }} onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; }}>
                 {uploadingPhoto ? <><Loader2 className="animate-spin" /> Uploading...</> : <>📸 Tap to Upload a Photo</>}
               </button>
             </div>
           </div>
 
           {photos.length > 0 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
+            <motion.div 
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } }}
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '2rem' }}
+            >
               {photos.map(photo => (
-                <div key={photo.id} style={{ position: 'relative', borderRadius: '1.5rem', overflow: 'hidden', border: `1px solid ${currentTheme.glassBorder}`, background: currentTheme.glass, aspectRatio: '1' }}>
+                <motion.div 
+                  variants={{ hidden: { opacity: 0, scale: 0.8 }, visible: { opacity: 1, scale: 1 } }}
+                  whileHover={{ scale: 1.05, y: -10, rotate: Math.random() * 4 - 2 }} 
+                  transition={{ duration: 0.3 }} 
+                  key={photo.id} 
+                  style={{ position: 'relative', borderRadius: '2rem', overflow: 'hidden', border: `4px solid ${currentTheme.glassBorder}`, background: currentTheme.glass, aspectRatio: '1', boxShadow: '0 30px 60px rgba(0,0,0,0.3)' }}
+                >
                   <img src={photo.image_url} alt="Event Memory" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '2rem 1rem 1rem', background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }}>
-                    <p style={{ color: 'white', fontWeight: 700, fontSize: '0.875rem', margin: 0 }}>By {photo.uploaded_by_name}</p>
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '3rem 1.5rem 1.5rem', background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)' }}>
+                    <p style={{ color: 'white', fontWeight: 800, fontSize: '1rem', margin: 0, fontFamily: 'Playfair Display', fontStyle: 'italic' }}>Captured by {photo.uploaded_by_name}</p>
                   </div>
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           ) : (
-            <div style={{ textAlign: 'center', padding: '4rem', border: `2px dashed ${currentTheme.glassBorder}`, borderRadius: '2rem' }}>
-              <p style={{ opacity: 0.5, fontStyle: 'italic' }}>No photos have been shared yet. Be the first!</p>
+            <div style={{ textAlign: 'center', padding: '6rem', border: `2px dashed ${currentTheme.glassBorder}`, borderRadius: '3rem', background: currentTheme.glass }}>
+              <p style={{ opacity: 0.5, fontStyle: 'italic', fontSize: '1.25rem' }}>No photos have been shared yet. Be the first!</p>
             </div>
           )}
-        </div>
-      </section>
+          </motion.div>
+        </section>
+      )}
+
+      {/* FLOATING BOTTOM RSVP BUTTON */}
+      {!rsvpSuccess && (
+        <motion.div 
+          initial={{ y: 150, x: '-50%' }} 
+          animate={{ y: 0, x: '-50%' }} 
+          transition={{ delay: 3, duration: 1.5, type: "spring" }}
+          style={{ position: 'fixed', bottom: '2rem', left: '50%', zIndex: 50, width: '90%', maxWidth: '400px' }}
+        >
+          <motion.button 
+            whileHover={{ scale: 1.05, boxShadow: `0 30px 60px ${accentColor}60` }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => document.getElementById('rsvp-section').scrollIntoView({ behavior: 'smooth' })}
+            style={{ width: '100%', padding: '1.25rem 2rem', background: `linear-gradient(to right, ${currentTheme.glass}, ${currentTheme.bg})`, backdropFilter: 'blur(30px)', border: `2px solid ${accentColor}`, borderRadius: '100px', color: accentColor, fontWeight: 900, fontSize: '1.125rem', letterSpacing: '0.2em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', boxShadow: '0 20px 40px rgba(0,0,0,0.3)', cursor: 'pointer' }}
+          >
+             Reserve Seat
+          </motion.button>
+        </motion.div>
+      )}
 
       {/* 5. FINAL FOIL FOOTER */}
-      <footer style={{ padding: '8rem 2rem', textAlign: 'center', background: `linear-gradient(to top, ${currentTheme.glass}, transparent)` }}>
+      <footer style={{ padding: '8rem 2rem 10rem', textAlign: 'center', background: `linear-gradient(to top, ${currentTheme.glass}, transparent)` }}>
          <motion.div 
-           initial={{ opacity: 0 }}
-           whileInView={{ opacity: 1 }}
+           initial={{ opacity: 0, y: 50 }}
+           whileInView={{ opacity: 1, y: 0 }}
+           viewport={{ once: true }}
+           transition={{ duration: 1 }}
            style={{ maxWidth: '400px', margin: '0 auto' }}
          >
-           <div style={{ fontSize: '1.5rem', fontWeight: 900, fontFamily: 'Outfit', color: accentColor, marginBottom: '1rem' }}>KKDesign</div>
-           <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Crafting Digital Legacies for Every Occasion.</p>
-           <div style={{ height: '1px', width: '100%', background: 'rgba(255,255,255,0.1)', margin: '2rem 0' }} />
-           <p style={{ fontSize: '0.75rem', opacity: 0.5 }}>© 2026 KKDesign Elite Platform. All Rights Reserved.</p>
+           <div style={{ fontSize: '2rem', fontWeight: 900, fontFamily: 'Outfit', color: accentColor, marginBottom: '1rem' }}>KKDesign</div>
+           <p style={{ color: currentTheme.text, opacity: 0.6, fontSize: '1rem' }}>Crafting Digital Legacies for Every Occasion.</p>
+           <div style={{ height: '1px', width: '100%', background: currentTheme.glassBorder, margin: '2rem 0' }} />
+           <p style={{ fontSize: '0.875rem', opacity: 0.4 }}>© 2026 KKDesign Elite Platform. All Rights Reserved.</p>
          </motion.div>
       </footer>
 
-      {/* Luxury Border Frame (Visible on scroll) */}
-      <div style={{ position: 'fixed', inset: '1rem', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '3.5rem', pointerEvents: 'none', zIndex: 100 }} />
+      <div style={{ position: 'fixed', inset: '1rem', border: `1px solid ${currentTheme.glassBorder}`, borderRadius: '2rem', pointerEvents: 'none', zIndex: 100 }} />
+      </motion.div>
     </div>
   );
 };

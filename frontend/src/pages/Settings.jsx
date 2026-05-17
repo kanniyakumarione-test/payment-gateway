@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, ShieldCheck, Save, Loader2, Sparkles } from 'lucide-react';
+import { User, Mail, ShieldCheck, Save, Loader2 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { auth } from '../lib/firebase';
 import { updateProfile } from 'firebase/auth';
@@ -92,7 +92,7 @@ const Settings = () => {
 
       <div style={{ marginTop: '2rem', textAlign: 'center', maxWidth: '600px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: '#ff6b6b', fontWeight: 700 }}>
-          <Sparkles size={16} /> KKDesign Elite Tier Member
+           KKDesign Elite Tier Member
         </div>
       </div>
     </motion.div>

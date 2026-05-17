@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Heart, Gift, Eye, Share2, Trash2, Calendar, MapPin, Loader2, Sparkles, Plus } from 'lucide-react';
+import { Search, Heart, Gift, Eye, Share2, Trash2, Calendar, MapPin, Loader2, Plus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { auth } from '../lib/firebase';
 import { useToast } from '../context/ToastContext';
@@ -112,7 +112,7 @@ const MyInvites = () => {
         </div>
       ) : filteredInvites.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '6rem 2rem', background: 'white', borderRadius: '2rem', border: '1px dashed #e2e8f0' }}>
-          <Sparkles size={48} style={{ margin: '0 auto 1.5rem', color: '#ff6b6b', opacity: 0.5 }} />
+          
           <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>No Celebrations Found</h3>
           <p style={{ color: '#64748b', marginBottom: '2rem' }}>You haven't created any digital invitations yet.</p>
           <button onClick={() => navigate('/dashboard/create')} style={{ padding: '1rem 2rem', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '1rem', fontWeight: 700, cursor: 'pointer' }}>Create First Invite</button>
@@ -133,7 +133,7 @@ const MyInvites = () => {
                   <button onClick={() => window.open(`/invite/${invite.id}`, '_blank')} title="Preview" style={{ padding: '0.625rem', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #f1f5f9', cursor: 'pointer', color: '#64748b' }}><Eye size={18} /></button>
                   <button onClick={() => fetchRsvps(invite)} title="View RSVPs" style={{ padding: '0.625rem', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #f1f5f9', cursor: 'pointer', color: '#6366f1' }}><Heart size={18} /></button>
                   <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/invite/${invite.id}`); showToast('Link Copied! 📋'); }} title="Share Link" style={{ padding: '0.625rem', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #f1f5f9', cursor: 'pointer', color: '#64748b' }}><Share2 size={18} /></button>
-                  <button onClick={() => setActiveQrCode(invite)} title="Get QR Code" style={{ padding: '0.625rem', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #f1f5f9', cursor: 'pointer', color: '#10b981' }}><Sparkles size={18} /></button>
+                  <button onClick={() => setActiveQrCode(invite)} title="Get QR Code" style={{ padding: '0.625rem', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #f1f5f9', cursor: 'pointer', color: '#10b981' }}></button>
                   <button onClick={() => setDeleteTargetId(invite.id)} title="Delete" style={{ padding: '0.625rem', borderRadius: '0.75rem', background: '#fef2f2', border: '1px solid #fee2e2', cursor: 'pointer', color: '#ef4444' }}><Trash2 size={18} /></button>
                 </div>
               </div>
