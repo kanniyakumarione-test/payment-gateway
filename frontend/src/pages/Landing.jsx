@@ -7,6 +7,13 @@ import FlamesGame from '../components/FlamesGame';
 
 const Landing = () => {
   const navigate = useNavigate();
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
+
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <div style={{ 
@@ -54,7 +61,7 @@ const Landing = () => {
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
-        padding: '1.25rem 8%', 
+        padding: isMobile ? '0.85rem 5%' : '1.25rem 8%', 
         position: 'fixed', 
         width: '100%', 
         top: 0, 
@@ -89,7 +96,7 @@ const Landing = () => {
 
       {/* Hero Section */}
       <section style={{ 
-        padding: '9rem 8% 6rem', 
+        padding: isMobile ? '6.5rem 5% 3.5rem' : '9rem 8% 6rem', 
         textAlign: 'center', 
         position: 'relative',
         zIndex: 1
@@ -199,11 +206,11 @@ const Landing = () => {
         {/* Feature Cards Grid */}
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', 
-          gap: '2.5rem', 
-          marginTop: '7rem', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+          gap: isMobile ? '1.5rem' : '2.5rem', 
+          marginTop: isMobile ? '3.5rem' : '7rem', 
           maxWidth: '1200px', 
-          margin: '7rem auto 0' 
+          margin: `${isMobile ? '3.5rem' : '7rem'} auto 0` 
         }}>
           {[
             { 
@@ -300,7 +307,7 @@ const Landing = () => {
 
       {/* Preview Section */}
       <section style={{ 
-        padding: '6rem 8% 8rem', 
+        padding: isMobile ? '4rem 4% 4rem' : '6rem 8% 8rem', 
         position: 'relative',
         zIndex: 1
       }}>
@@ -308,8 +315,8 @@ const Landing = () => {
           maxWidth: '1100px', 
           margin: '0 auto', 
           background: 'linear-gradient(145deg, #0b071a 0%, #0f172a 100%)', 
-          borderRadius: '3.5rem', 
-          padding: '5rem 4rem 4rem', 
+          borderRadius: isMobile ? '2rem' : '3.5rem', 
+          padding: isMobile ? '3rem 1.25rem 2rem' : '5rem 4rem 4rem', 
           color: 'white', 
           textAlign: 'center', 
           position: 'relative', 
@@ -400,14 +407,19 @@ const Landing = () => {
                 margin: '0 auto',
                 background: 'rgba(255,255,255,0.05)',
                 borderRadius: '6px',
-                height: '18px',
-                width: '260px',
-                fontSize: '0.65rem',
+                height: '20px',
+                width: isMobile ? '60%' : '260px',
+                maxWidth: '260px',
+                fontSize: isMobile ? '0.55rem' : '0.65rem',
                 color: 'rgba(255,255,255,0.3)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontFamily: 'monospace'
+                fontFamily: 'monospace',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                padding: '0 8px'
               }}>
                 invitation.kanniyakumarione.com/my-event
               </div>
@@ -440,7 +452,7 @@ const Landing = () => {
 
       {/* Footer */}
       <footer style={{ 
-        padding: '5rem 8% 4rem', 
+        padding: isMobile ? '3rem 5% 2.5rem' : '5rem 8% 4rem', 
         textAlign: 'center', 
         borderTop: '1px solid rgba(241, 245, 249, 0.8)',
         background: '#ffffff',
