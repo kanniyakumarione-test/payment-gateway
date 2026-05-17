@@ -39,7 +39,8 @@ const CreateEvent = () => {
     contact_number: '',
     password: '',
     expiry_date: '',
-    image_url: ''
+    image_url: '',
+    theme: 'classic'
   });
 
   useEffect(() => {
@@ -233,19 +234,35 @@ const CreateEvent = () => {
       <div style={{ background: 'white', padding: isMobile ? '1.5rem' : '2.5rem', borderRadius: '2rem', border: '1px solid #e2e8f0', boxShadow: '0 10px 30px rgba(0,0,0,0.02)' }}>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label style={labelStyle}>Event Type</label>
-            <select 
-              value={formData.type}
-              onChange={(e) => setFormData({...formData, type: e.target.value})}
-              style={{ ...inputStyle, paddingLeft: '1rem', fontWeight: 600 }}
-            >
-              <option value="Wedding">💍 Wedding</option>
-              <option value="Birthday">🎂 Birthday</option>
-              <option value="Anniversary">💖 Anniversary</option>
-              <option value="House Warming">🏠 House Warming</option>
-              <option value="Party">🎉 Party</option>
-            </select>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={labelStyle}>Event Type</label>
+              <select 
+                value={formData.type}
+                onChange={(e) => setFormData({...formData, type: e.target.value})}
+                style={{ ...inputStyle, paddingLeft: '1rem', fontWeight: 600 }}
+              >
+                <option value="Wedding">💍 Wedding</option>
+                <option value="Birthday">🎂 Birthday</option>
+                <option value="Anniversary">💖 Anniversary</option>
+                <option value="House Warming">🏠 House Warming</option>
+                <option value="Party">🎉 Party</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={labelStyle}>Design Theme</label>
+              <select 
+                value={formData.theme}
+                onChange={(e) => setFormData({...formData, theme: e.target.value})}
+                style={{ ...inputStyle, paddingLeft: '1rem', fontWeight: 600 }}
+              >
+                <option value="classic">✨ Classic Elegance (Light)</option>
+                <option value="midnight">🌙 Midnight Luxury (Dark)</option>
+                <option value="floral">🌸 Blooming Floral (Pink/Gold)</option>
+                <option value="minimal">🧊 Minimalist Glass (Modern)</option>
+              </select>
+            </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

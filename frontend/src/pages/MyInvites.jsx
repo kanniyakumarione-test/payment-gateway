@@ -222,19 +222,36 @@ const MyInvites = () => {
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {rsvpList.map(rsvp => (
-                    <div key={rsvp.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: '#f8fafc', borderRadius: '1rem', border: '1px solid #f1f5f9' }}>
-                      <div>
-                        <div style={{ fontWeight: 800, color: '#0f172a' }}>{rsvp.guest_name}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem' }}>{new Date(rsvp.created_at).toLocaleDateString()}</div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{ padding: '0.25rem 0.75rem', background: 'white', borderRadius: '100px', fontSize: '0.875rem', fontWeight: 700 }}>
-                          {rsvp.guest_count} {rsvp.guest_count === 1 ? 'Guest' : 'Guests'}
+                    <div key={rsvp.id} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem', background: '#f8fafc', borderRadius: '1rem', border: '1px solid #f1f5f9' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <div style={{ fontWeight: 800, color: '#0f172a' }}>{rsvp.guest_name}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem' }}>{new Date(rsvp.created_at).toLocaleDateString()}</div>
                         </div>
-                        <div style={{ padding: '0.25rem 0.75rem', background: rsvp.status === 'attending' ? '#dcfce7' : '#fee2e2', color: rsvp.status === 'attending' ? '#16a34a' : '#dc2626', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase' }}>
-                          {rsvp.status}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <div style={{ padding: '0.25rem 0.75rem', background: 'white', borderRadius: '100px', fontSize: '0.875rem', fontWeight: 700 }}>
+                            {rsvp.guest_count} {rsvp.guest_count === 1 ? 'Guest' : 'Guests'}
+                          </div>
+                          <div style={{ padding: '0.25rem 0.75rem', background: rsvp.status === 'attending' ? '#dcfce7' : '#fee2e2', color: rsvp.status === 'attending' ? '#16a34a' : '#dc2626', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase' }}>
+                            {rsvp.status}
+                          </div>
                         </div>
                       </div>
+                      
+                      {(rsvp.dietary_restrictions && rsvp.dietary_restrictions !== 'None' || rsvp.guest_message) && (
+                        <div style={{ paddingTop: '0.75rem', borderTop: '1px dashed #e2e8f0', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          {rsvp.dietary_restrictions && rsvp.dietary_restrictions !== 'None' && (
+                            <div style={{ fontSize: '0.875rem', color: '#64748b' }}>
+                              <span style={{ fontWeight: 700, color: '#475569' }}>Dietary:</span> {rsvp.dietary_restrictions}
+                            </div>
+                          )}
+                          {rsvp.guest_message && (
+                            <div style={{ fontSize: '0.875rem', color: '#64748b', fontStyle: 'italic', background: 'white', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #f1f5f9' }}>
+                              "{rsvp.guest_message}"
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
