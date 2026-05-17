@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Heart, Gift, PartyPopper, ChevronRight, Calendar, MapPin, Users } from 'lucide-react';
+import Logo from '../components/Logo';
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -10,12 +11,7 @@ const Landing = () => {
     <div style={{ minHeight: '100vh', background: '#fff', color: '#1a1a1a', overflowX: 'hidden' }}>
       {/* Navigation */}
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 5%', position: 'fixed', width: '100%', top: 0, background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)', zIndex: 100 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.5rem', fontWeight: 900, fontFamily: 'Outfit', color: 'var(--primary)' }}>
-          <div style={{ width: '40px', height: '40px', background: 'linear-gradient(135deg, #6366f1, #a855f7)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-            
-          </div>
-          KKDesign
-        </div>
+          <Logo size={40} />
         <button 
           onClick={() => navigate('/login')}
           style={{ padding: '0.75rem 1.5rem', background: '#1a1a1a', color: 'white', borderRadius: '100px', fontWeight: 700, border: 'none', cursor: 'pointer' }}
