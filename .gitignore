@@ -1,0 +1,18 @@
+node_modules/
+*.log
+.DS_Store
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Build outputs
+dist/
+build/
+coverage/
+
+# App-specific artifacts
+frontend/node_modules/
+frontend/dist/
+backend/node_modules/

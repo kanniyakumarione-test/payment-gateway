@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Heart, Gift, PartyPopper, ChevronRight, Calendar, MapPin, Users } from 'lucide-react';
 import Logo from '../components/Logo';
+import FlamesGame from '../components/FlamesGame';
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -87,6 +88,17 @@ const Landing = () => {
           />
         </div>
       </section>
+
+      <FlamesGame
+        theme={{
+          glass: 'rgba(255,255,255,0.85)',
+          glassBorder: 'rgba(0,0,0,0.08)',
+          text: '#1a1a1a',
+          inputBg: '#ffffff',
+          inputText: '#1a1a1a',
+          primary: '#ff6b6b',
+        }}
+      />
 
       {/* Footer */}
       <footer style={{ padding: '5rem 5%', textAlign: 'center', borderTop: '1px solid #f1f5f9' }}>

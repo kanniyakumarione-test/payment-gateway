@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Heart, Gift, Eye, Share2, Trash2, Calendar, MapPin, Loader2, Plus, QrCode } from 'lucide-react';
+import { Search, Heart, Gift, Eye, Share2, Trash2, Calendar, MapPin, Loader2, Plus, QrCode, Image } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { auth } from '../lib/firebase';
 import { useToast } from '../context/ToastContext';
@@ -14,6 +14,9 @@ const MyInvites = () => {
   const [activeRsvpEvent, setActiveRsvpEvent] = useState(null);
   const [rsvpList, setRsvpList] = useState([]);
   const [loadingRsvps, setLoadingRsvps] = useState(false);
+  const [activeModerationEvent, setActiveModerationEvent] = useState(null);
+  const [pendingPhotos, setPendingPhotos] = useState([]);
+  const [loadingModeration, setLoadingModeration] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState(null); // Custom confirm modal state
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -74,6 +77,53 @@ const MyInvites = () => {
     }
   };
 
+  const fetchPendingPhotos = async (invite) => {
+    setActiveModerationEvent(invite);
+    setLoadingModeration(true);
+    try {
+      const { data, error } = await supabase
+        .from('event_photos')
+        .select('*')
+        .eq('event_id', invite.id)
+        .eq('approved', false)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setPendingPhotos(data || []);
+    } catch (err) {
+      showToast('Failed to fetch pending photos', 'error');
+    } finally {
+      setLoadingModeration(false);
+    }
+  };
+
+  const approvePhoto = async (photoId) => {
+    try {
+      const { error } = await supabase
+        .from('event_photos')
+        .update({ approved: true })
+        .eq('id', photoId);
+      if (error) throw error;
+      setPendingPhotos(prev => prev.filter(photo => photo.id !== photoId));
+      showToast('Photo approved');
+    } catch (err) {
+      showToast('Approve failed', 'error');
+    }
+  };
+
+  const rejectPhoto = async (photoId) => {
+    try {
+      const { error } = await supabase
+        .from('event_photos')
+        .delete()
+        .eq('id', photoId);
+      if (error) throw error;
+      setPendingPhotos(prev => prev.filter(photo => photo.id !== photoId));
+      showToast('Photo rejected');
+    } catch (err) {
+      showToast('Reject failed', 'error');
+    }
+  };
+
   const filteredInvites = invites.filter(invite => 
     invite.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     invite.type.toLowerCase().includes(searchTerm.toLowerCase())
@@ -129,12 +179,13 @@ const MyInvites = () => {
                 <div style={{ width: '56px', height: '56px', background: invite.type === 'Wedding' ? '#fff0f0' : '#f0f9ff', color: invite.type === 'Wedding' ? '#ff6b6b' : '#0ea5e9', borderRadius: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {invite.type === 'Wedding' ? <Heart size={28} /> : <Gift size={28} />}
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button onClick={() => window.open(`/invite/${invite.id}`, '_blank')} title="Preview" style={{ padding: '0.625rem', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #f1f5f9', cursor: 'pointer', color: '#64748b' }}><Eye size={18} /></button>
-                  <button onClick={() => fetchRsvps(invite)} title="View RSVPs" style={{ padding: '0.625rem', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #f1f5f9', cursor: 'pointer', color: '#6366f1' }}><Heart size={18} /></button>
+                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: '0.5rem', maxWidth: '190px' }}>
+                  <button onClick={() => window.open(`/invite/${invite.id}`, '_blank')} title="Preview" style={{ width: '38px', height: '38px', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #f1f5f9', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Eye size={18} /></button>
+                  <button onClick={() => fetchRsvps(invite)} title="View RSVPs" style={{ width: '38px', height: '38px', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #f1f5f9', cursor: 'pointer', color: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Heart size={18} /></button>
+                  <button onClick={() => fetchPendingPhotos(invite)} title="Moderate Photos" style={{ width: '38px', height: '38px', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #f1f5f9', cursor: 'pointer', color: '#0ea5e9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Image size={18} /></button>
                   <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/invite/${invite.id}`); showToast('Link Copied! 📋'); }} title="Share Link" style={{ padding: '0.625rem', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #f1f5f9', cursor: 'pointer', color: '#64748b' }}><Share2 size={18} /></button>
-                  <button onClick={() => setActiveQrCode(invite)} title="Get QR Code" style={{ padding: '0.625rem', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #f1f5f9', cursor: 'pointer', color: '#10b981' }}><QrCode size={18} /></button>
-                  <button onClick={() => setDeleteTargetId(invite.id)} title="Delete" style={{ padding: '0.625rem', borderRadius: '0.75rem', background: '#fef2f2', border: '1px solid #fee2e2', cursor: 'pointer', color: '#ef4444' }}><Trash2 size={18} /></button>
+                  <button onClick={() => setActiveQrCode(invite)} title="Get QR Code" style={{ width: '38px', height: '38px', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #f1f5f9', cursor: 'pointer', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><QrCode size={18} /></button>
+                  <button onClick={() => setDeleteTargetId(invite.id)} title="Delete" style={{ width: '38px', height: '38px', borderRadius: '0.75rem', background: '#fef2f2', border: '1px solid #fee2e2', cursor: 'pointer', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Trash2 size={18} /></button>
                 </div>
               </div>
 
@@ -252,6 +303,42 @@ const MyInvites = () => {
                           )}
                         </div>
                       )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Photo Moderation Modal */}
+      {activeModerationEvent && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: 'white', padding: '2.5rem', borderRadius: '2rem', maxWidth: '800px', width: '100%', position: 'relative', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+            <button onClick={() => setActiveModerationEvent(null)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#64748b' }}>×</button>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '0.5rem', paddingRight: '2rem' }}>Photo Moderation: {activeModerationEvent.title}</h2>
+            <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '1.5rem' }}>Approve photos to publish them on the event memory wall.</p>
+
+            <div style={{ overflowY: 'auto', flex: 1, paddingRight: '0.5rem' }}>
+              {loadingModeration ? (
+                <div style={{ textAlign: 'center', padding: '2rem' }}><Loader2 className="animate-spin" size={32} color="#6366f1" style={{ margin: '0 auto' }} /></div>
+              ) : pendingPhotos.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>No pending photos.</div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
+                  {pendingPhotos.map((photo) => (
+                    <div key={photo.id} style={{ border: '1px solid #e2e8f0', borderRadius: '1rem', overflow: 'hidden', background: '#f8fafc' }}>
+                      <img src={photo.image_url} alt="Pending guest upload" style={{ width: '100%', height: '180px', objectFit: 'cover' }} />
+                      <div style={{ padding: '0.75rem' }}>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.75rem' }}>
+                          Uploaded by: <strong>{photo.uploaded_by_name || 'Guest'}</strong>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button onClick={() => approvePhoto(photo.id)} style={{ flex: 1, padding: '0.5rem', background: '#22c55e', color: 'white', border: 'none', borderRadius: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>Approve</button>
+                          <button onClick={() => rejectPhoto(photo.id)} style={{ flex: 1, padding: '0.5rem', background: '#ef4444', color: 'white', border: 'none', borderRadius: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>Reject</button>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>

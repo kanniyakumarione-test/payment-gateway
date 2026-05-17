@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { motion, useScroll, useTransform, useSpring, useMotionValue, AnimatePresence } from 'framer-motion';
 import { Calendar, Clock, MapPin, User, Phone, Heart, Loader2, Music, Gift, Share2, Map as MapIcon, ChevronDown, Star, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { applyInviteSeo } from '../lib/seo';
 
 
 
@@ -57,6 +58,7 @@ const EventPreview = () => {
           .from('event_photos')
           .select('*')
           .eq('event_id', id)
+          .eq('approved', true)
           .order('created_at', { ascending: false });
         
         if (photoData) setPhotos(photoData);
@@ -70,6 +72,11 @@ const EventPreview = () => {
 
     fetchEvent();
   }, [id]);
+
+  useEffect(() => {
+    if (!event) return;
+    applyInviteSeo(event, id);
+  }, [event, id]);
 
   useEffect(() => {
     if (!event) return;
@@ -179,17 +186,17 @@ const EventPreview = () => {
       const newPhoto = {
         event_id: id,
         image_url: result.secure_url,
-        uploaded_by_name: uploaderName
+        uploaded_by_name: uploaderName,
+        approved: false
       };
 
-      const { data: insertedData, error } = await supabase
+      const { error } = await supabase
         .from('event_photos')
         .insert([newPhoto])
         .select();
 
       if (error) throw error;
-      setPhotos([insertedData[0], ...photos]);
-      alert("Photo added to the gallery! 📸");
+      alert('Photo uploaded and sent for host approval.');
     } catch (err) {
       alert("Failed to upload photo. Please try again.");
     } finally {
