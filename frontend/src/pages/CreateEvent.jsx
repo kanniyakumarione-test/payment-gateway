@@ -28,6 +28,11 @@ const CreateEvent = () => {
   const [pendingImageBlob, setPendingImageBlob] = useState(null);
   const [pendingImagePreview, setPendingImagePreview] = useState('');
 
+  // Secondary Event Profile Photo States
+  const [pendingSecondaryBlob, setPendingSecondaryBlob] = useState(null);
+  const [pendingSecondaryPreview, setPendingSecondaryPreview] = useState('');
+  const [croppingTarget, setCroppingTarget] = useState('hero');
+
   const [formData, setFormData] = useState({
     type: 'Wedding',
     title: '',
@@ -120,9 +125,10 @@ const CreateEvent = () => {
     }
   };
 
-  const handleImageSelect = (e) => {
+  const handleImageSelect = (e, target = 'hero') => {
     const file = e.target.files[0];
     if (!file) return;
+    setCroppingTarget(target);
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => {
@@ -161,8 +167,13 @@ const CreateEvent = () => {
     if (!imageToCrop || !croppedAreaPixels) return;
     try {
       const blob = await createCropCanvas(imageToCrop, croppedAreaPixels);
-      setPendingImageBlob(blob);
-      setPendingImagePreview(URL.createObjectURL(blob));
+      if (croppingTarget === 'hero') {
+        setPendingImageBlob(blob);
+        setPendingImagePreview(URL.createObjectURL(blob));
+      } else {
+        setPendingSecondaryBlob(blob);
+        setPendingSecondaryPreview(URL.createObjectURL(blob));
+      }
       setImageToCrop(null); // Close cropper modal
     } catch (e) {
       showToast('Crop failed', 'error');
@@ -199,16 +210,28 @@ const CreateEvent = () => {
       if (!user) throw new Error('Please login');
 
       let finalImageUrl = formData.image_url;
+      let secondaryImageUrl = '';
 
       if (pendingImageBlob) {
         showToast('Uploading Hero Image... ☁️');
         finalImageUrl = await uploadToCloudinary(pendingImageBlob);
       }
 
+      if (pendingSecondaryBlob) {
+        showToast('Uploading Event Profile... ☁️');
+        secondaryImageUrl = await uploadToCloudinary(pendingSecondaryBlob);
+      }
+
+      let finalDescription = formData.description;
+      if (secondaryImageUrl) {
+        finalDescription += ` ||event_profile_image:${secondaryImageUrl}`;
+      }
+
       showToast('Saving Event Details... 💾');
       const { error } = await supabase.from('events').insert([{ 
         ...formData, 
         image_url: finalImageUrl, 
+        description: finalDescription,
         user_id: user.uid 
       }]);
       if (error) throw error;
@@ -288,6 +311,45 @@ const CreateEvent = () => {
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
                     <div style={{ fontSize: '2rem' }}>📸</div>
                     <span style={{ fontWeight: 600, color: '#64748b' }}>Click or drag an image to crop</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* EVENT-SPECIFIC SECONDARY IMAGE UPLOAD */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <label style={labelStyle}>
+              {formData.type === 'Birthday' && '🎂 Birthday Star Profile Photo (Optional)'}
+              {formData.type === 'Anniversary' && '💖 Couple Profile Photo (Optional)'}
+              {formData.type === 'Wedding' && '💍 Bride & Groom Portrait (Optional)'}
+              {formData.type === 'House Warming' && '🏠 New House Showcase Photo (Optional)'}
+              {formData.type === 'Party' && '🎉 Host / Highlights Photo (Optional)'}
+            </label>
+            <div style={{ padding: '1.5rem', background: '#f8fafc', borderRadius: '1.5rem', border: '2px dashed #cbd5e1', textAlign: 'center', position: 'relative' }}>
+              {pendingSecondaryPreview ? (
+                <div style={{ position: 'relative', display: 'inline-block' }}>
+                  <img src={pendingSecondaryPreview} alt="Secondary Preview" style={{ height: '200px', width: '200px', objectFit: 'cover', borderRadius: '50%', boxShadow: '0 10px 20px rgba(0,0,0,0.1)', border: '4px solid white' }} />
+                  <button type="button" onClick={() => { setPendingSecondaryPreview(''); setPendingSecondaryBlob(null); }} style={{ position: 'absolute', top: '5px', right: '5px', background: 'red', color: 'white', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>×</button>
+                </div>
+              ) : (
+                <>
+                  <input type="file" accept="image/*" onChange={(e) => handleImageSelect(e, 'secondary')} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', zIndex: 2 }} />
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ fontSize: '2rem' }}>
+                      {formData.type === 'Birthday' && '👦'}
+                      {formData.type === 'Anniversary' && '👩‍❤️‍👨'}
+                      {formData.type === 'Wedding' && '👰'}
+                      {formData.type === 'House Warming' && '🏡'}
+                      {formData.type === 'Party' && '🥳'}
+                    </div>
+                    <span style={{ fontWeight: 600, color: '#64748b' }}>
+                      {formData.type === 'Birthday' && 'Click to crop the Birthday Star profile'}
+                      {formData.type === 'Anniversary' && 'Click to crop the couple profile'}
+                      {formData.type === 'Wedding' && 'Click to crop the Bride & Groom portrait'}
+                      {formData.type === 'House Warming' && 'Click to crop the house showcase photo'}
+                      {formData.type === 'Party' && 'Click to crop the host profile'}
+                    </span>
                   </div>
                 </>
               )}
@@ -380,7 +442,7 @@ const CreateEvent = () => {
               image={imageToCrop}
               crop={crop}
               zoom={zoom}
-              aspect={9 / 16}
+              aspect={croppingTarget === 'hero' ? 9 / 16 : 1 / 1}
               onCropChange={setCrop}
               onZoomChange={setZoom}
               onCropComplete={(croppedArea, croppedAreaPixels) => setCroppedAreaPixels(croppedAreaPixels)}

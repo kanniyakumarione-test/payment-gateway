@@ -83,17 +83,23 @@ const DashboardLayout = () => {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc' }}>
-      {/* Desktop Sidebar (Same as before but refined) */}
-      <motion.aside 
-        initial={false}
-        animate={{ width: isSidebarOpen ? '280px' : '80px' }}
-        style={{ background: 'white', borderRight: '1px solid #e2e8f0', padding: '1.5rem 1rem', display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh', zIndex: 50 }}
+      {/* Desktop Sidebar (Refined and always open) */}
+      <aside 
+        style={{ 
+          width: '280px',
+          background: 'white', 
+          borderRight: '1px solid #e2e8f0', 
+          padding: '2rem 1.5rem', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          position: 'sticky', 
+          top: 0, 
+          height: '100vh', 
+          zIndex: 50 
+        }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '3rem', padding: '0 0.5rem' }}>
-          {isSidebarOpen 
-            ? <Logo size={40} />
-            : <div style={{ width: '40px', height: '40px', background: 'linear-gradient(135deg, #6366f1, #a855f7)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 15px rgba(99,102,241,0.3)' }}><span style={{ color: 'white', fontWeight: 900, fontSize: '1.25rem', fontFamily: 'Outfit' }}>K</span></div>
-          }
+          <Logo size={36} />
         </div>
 
         <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -115,38 +121,73 @@ const DashboardLayout = () => {
               }}
             >
               {item.icon}
-              {isSidebarOpen && <span>{item.label}</span>}
+              <span>{item.label}</span>
             </Link>
           ))}
         </nav>
 
-        <button 
-          onClick={handleLogout}
-          style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.875rem 1rem', borderRadius: '0.75rem', border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontWeight: 700, marginTop: 'auto' }}
-        >
-          <LogOut size={20} />
-          {isSidebarOpen && <span>Sign Out</span>}
-        </button>
-      </motion.aside>
-
-      {/* Main Content */}
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <header style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '1rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 40 }}>
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
-            {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '0.875rem', fontWeight: 700 }}>{user?.displayName || 'Designer'}</div>
-              <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{user?.email}</div>
+        {/* User Profile Card & Sign Out at Bottom of Sidebar */}
+        <div style={{ marginTop: 'auto' }}>
+          <div style={{ 
+            borderTop: '1px solid #f1f5f9', 
+            paddingTop: '1.5rem', 
+            marginBottom: '1.25rem',
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.75rem',
+            paddingLeft: '0.5rem',
+            paddingRight: '0.5rem',
+            overflow: 'hidden'
+          }}>
+            <div style={{ 
+              width: '36px', 
+              height: '36px', 
+              background: '#f1f5f9', 
+              borderRadius: '50%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              flexShrink: 0
+            }}>
+              <User size={18} color="#64748b" />
             </div>
-            <div style={{ width: '40px', height: '40px', background: '#f1f5f9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <User size={20} color="#64748b" />
+            <div style={{ textAlign: 'left', minWidth: 0 }}>
+              <div style={{ fontSize: '0.875rem', fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {user?.displayName || 'Designer'}
+              </div>
+              <div style={{ fontSize: '0.725rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {user?.email}
+              </div>
             </div>
           </div>
-        </header>
+          
+          <button 
+            onClick={handleLogout}
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.75rem', 
+              width: '100%',
+              padding: '0.875rem 1rem', 
+              borderRadius: '0.75rem', 
+              border: 'none', 
+              background: 'rgba(239, 68, 68, 0.05)', 
+              color: '#ef4444', 
+              cursor: 'pointer', 
+              fontWeight: 700,
+              fontSize: '0.875rem',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <LogOut size={16} />
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </aside>
 
-        <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
+      {/* Main Content Area without the top desktop header bar */}
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+        <div style={{ padding: '2.5rem 3rem', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
           <Outlet />
         </div>
       </main>

@@ -89,12 +89,6 @@ const Settings = () => {
           </button>
         </form>
       </div>
-
-      <div style={{ marginTop: '2rem', textAlign: 'center', maxWidth: '600px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: '#ff6b6b', fontWeight: 700 }}>
-           KKDesign Elite Tier Member
-        </div>
-      </div>
     </motion.div>
   );
 };

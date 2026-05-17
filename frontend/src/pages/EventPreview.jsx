@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, useScroll, useTransform, useSpring, useMotionValue, AnimatePresence } from 'framer-motion';
-import { Calendar, Clock, MapPin, User, Phone, Heart, Loader2, Music, Gift, Share2, Map as MapIcon, ChevronDown, Star, Eye, EyeOff } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Phone, Heart, Loader2, Music, Gift, Share2, Map as MapIcon, ChevronDown, Star, Eye, EyeOff, Lock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { applyInviteSeo } from '../lib/seo';
 
@@ -282,16 +282,116 @@ const EventPreview = () => {
   const primaryColor = currentTheme.primary;
   const accentColor = currentTheme.accent;
 
+  // Extract description and secondary profile image
+  let eventDescription = event?.description || '';
+  let eventProfileImage = '';
+  if (eventDescription.includes(' ||event_profile_image:')) {
+    const parts = eventDescription.split(' ||event_profile_image:');
+    eventDescription = parts[0];
+    eventProfileImage = parts[1];
+  }
+
   if (event.password && !isUnlocked) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: currentTheme.bg, color: currentTheme.text, padding: '2rem' }}>
-        <div style={{ background: currentTheme.glass, backdropFilter: 'blur(20px)', padding: '3rem', borderRadius: '2rem', border: `1px solid ${currentTheme.glassBorder}`, textAlign: 'center', maxWidth: '400px', width: '100%', zIndex: 10 }}>
-          <div style={{ width: '60px', height: '60px', background: currentTheme.glass, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2rem' }}>
-            <span style={{ fontSize: '1.5rem' }}>🔒</span>
-          </div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '0.5rem', fontFamily: 'Outfit' }}>Private Event</h2>
-          <p style={{ color: '#94a3b8', marginBottom: '2rem', fontSize: '0.875rem' }}>Please enter the password to view this invitation.</p>
+      <div style={{ 
+        minHeight: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        background: currentTheme.bg, 
+        color: currentTheme.text, 
+        padding: '2rem',
+        position: 'relative',
+        overflow: 'hidden',
+        fontFamily: 'Inter, sans-serif'
+      }}>
+        {/* Ambient Glow Blobs matching current theme */}
+        <div style={{
+          position: 'absolute',
+          top: '-10%',
+          right: '-10%',
+          width: '500px',
+          height: '500px',
+          background: `radial-gradient(circle, ${primaryColor}15 0%, ${accentColor}05 50%, rgba(255,255,255,0) 100%)`,
+          zIndex: 0,
+          pointerEvents: 'none'
+        }} />
+        <div style={{
+          position: 'absolute',
+          bottom: '-10%',
+          left: '-10%',
+          width: '500px',
+          height: '500px',
+          background: `radial-gradient(circle, ${accentColor}10 0%, rgba(255,255,255,0) 70%)`,
+          zIndex: 0,
+          pointerEvents: 'none'
+        }} />
+
+        {/* Main Glass Lock Card */}
+        <motion.div 
+          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.8, cubicBezier: [0.16, 1, 0.3, 1] }}
+          style={{ 
+            background: theme === 'midnight' ? 'rgba(255, 255, 255, 0.03)' : currentTheme.glass, 
+            backdropFilter: 'blur(30px)', 
+            padding: '4rem 3rem', 
+            borderRadius: '2.5rem', 
+            border: `1px solid ${currentTheme.glassBorder}`, 
+            textAlign: 'center', 
+            maxWidth: '440px', 
+            width: '100%', 
+            zIndex: 10,
+            boxShadow: theme === 'midnight' 
+              ? '0 50px 100px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)' 
+              : '0 30px 60px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255,255,255,0.5)',
+            position: 'relative'
+          }}
+        >
+          {/* Double-Glassmorphic Animated Lock Icon */}
+          <motion.div 
+            whileHover={{ scale: 1.08, rotate: 5 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+            style={{ 
+              width: '76px', 
+              height: '76px', 
+              background: 'linear-gradient(135deg, ' + primaryColor + '15 0%, ' + accentColor + '08 100%)', 
+              border: `1px solid ${primaryColor}25`,
+              borderRadius: '24px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              margin: '0 auto 2.5rem',
+              boxShadow: `0 15px 30px ${primaryColor}08`
+            }}
+          >
+            <Lock size={28} color={primaryColor} />
+          </motion.div>
+
+          {/* Heading */}
+          <h2 style={{ 
+            fontSize: '2rem', 
+            fontWeight: 900, 
+            marginBottom: '0.75rem', 
+            fontFamily: 'Outfit, sans-serif',
+            letterSpacing: '-0.02em',
+            color: currentTheme.text
+          }}>
+            Private Event
+          </h2>
           
+          {/* Subtitle */}
+          <p style={{ 
+            color: theme === 'midnight' ? '#94a3b8' : '#64748b', 
+            marginBottom: '2.5rem', 
+            fontSize: '0.95rem',
+            lineHeight: '1.5',
+            fontWeight: 500
+          }}>
+            Please enter the password to view this invitation.
+          </p>
+          
+          {/* Password Entry Form */}
           <form onSubmit={(e) => {
             e.preventDefault();
             if (passwordInput === event.password) {
@@ -300,31 +400,110 @@ const EventPreview = () => {
               setPasswordError(true);
             }
           }}>
-            <div style={{ position: 'relative', width: '100%', marginBottom: '1rem' }}>
+            <motion.div 
+              animate={passwordError ? { x: [-10, 10, -10, 10, -5, 5, 0] } : {}}
+              transition={{ duration: 0.5 }}
+              style={{ position: 'relative', width: '100%', marginBottom: '1.25rem' }}
+            >
               <input 
                 type={showPassword ? "text" : "password"} 
                 placeholder="Enter Password" 
                 value={passwordInput}
                 onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false); }}
-                style={{ width: '100%', padding: '1rem', borderRadius: '1rem', border: `2px solid ${passwordError ? '#ef4444' : currentTheme.glassBorder}`, background: currentTheme.inputBg, color: currentTheme.inputText, outline: 'none', textAlign: 'center', fontSize: '1rem', letterSpacing: '0.2em' }}
+                style={{ 
+                  width: '100%', 
+                  padding: '1.1rem 1.5rem', 
+                  borderRadius: '1.25rem', 
+                  border: `2px solid ${passwordError ? '#ef4444' : currentTheme.glassBorder}`, 
+                  background: currentTheme.inputBg, 
+                  color: currentTheme.inputText, 
+                  outline: 'none', 
+                  textAlign: 'center', 
+                  fontSize: '1.05rem', 
+                  letterSpacing: '0.15em',
+                  fontWeight: 600,
+                  transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+                  boxShadow: passwordError ? '0 0 15px rgba(239, 68, 68, 0.1)' : 'none'
+                }}
+                onFocus={(e) => {
+                  if (!passwordError) {
+                    e.target.style.borderColor = primaryColor;
+                    e.target.style.boxShadow = `0 0 15px ${primaryColor}15`;
+                  }
+                }}
+                onBlur={(e) => {
+                  if (!passwordError) {
+                    e.target.style.borderColor = currentTheme.glassBorder;
+                    e.target.style.boxShadow = 'none';
+                  }
+                }}
               />
               <button 
                 type="button" 
                 onClick={() => setShowPassword(!showPassword)}
-                style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: currentTheme.inputText, opacity: 0.6, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                style={{ 
+                  position: 'absolute', 
+                  right: '1.25rem', 
+                  top: '50%', 
+                  transform: 'translateY(-50%)', 
+                  background: 'none', 
+                  border: 'none', 
+                  color: currentTheme.inputText, 
+                  opacity: 0.5, 
+                  cursor: 'pointer', 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  transition: 'opacity 0.2s ease'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.opacity = 0.8}
+                onMouseOut={(e) => e.currentTarget.style.opacity = 0.5}
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
-            </div>
-            {passwordError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginBottom: '1rem', fontWeight: 700 }}>Incorrect password</p>}
-            <button 
+            </motion.div>
+            
+            {passwordError && (
+              <motion.p 
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{ 
+                  color: '#ef4444', 
+                  fontSize: '0.85rem', 
+                  marginBottom: '1.25rem', 
+                  fontWeight: 700,
+                  letterSpacing: '-0.01em'
+                }}
+              >
+                Incorrect password. Please try again.
+              </motion.p>
+            )}
+
+            {/* Glowing Action Button */}
+            <motion.button 
               type="submit" 
-              style={{ width: '100%', padding: '1rem', background: primaryColor, color: 'white', border: 'none', borderRadius: '1rem', fontWeight: 800, cursor: 'pointer', fontSize: '1rem' }}
+              whileHover={{ 
+                scale: 1.02, 
+                boxShadow: `0 15px 30px ${primaryColor}30` 
+              }}
+              whileTap={{ scale: 0.98 }}
+              style={{ 
+                width: '100%', 
+                padding: '1.1rem 1.5rem', 
+                background: `linear-gradient(135deg, ${primaryColor} 0%, ${accentColor} 100%)`, 
+                color: 'white', 
+                border: 'none', 
+                borderRadius: '1.25rem', 
+                fontWeight: 800, 
+                cursor: 'pointer', 
+                fontSize: '1.05rem',
+                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.05)',
+                transition: 'box-shadow 0.2s ease'
+              }}
             >
               Unlock Invitation
-            </button>
+            </motion.button>
           </form>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -532,9 +711,34 @@ const EventPreview = () => {
           transition={{ duration: 1 }}
           style={{ maxWidth: '800px', margin: '0 auto 6rem', textAlign: 'center' }}
         >
+            {eventProfileImage && (
+              <motion.div 
+                initial={{ scale: 0.8, opacity: 0 }}
+                whileInView={{ scale: 1, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                style={{ 
+                  width: '180px', 
+                  height: '180px', 
+                  borderRadius: '50%', 
+                  border: `4px solid ${accentColor}`, 
+                  boxShadow: `0 20px 50px ${primaryColor}25`,
+                  margin: '0 auto 2.5rem',
+                  overflow: 'hidden',
+                  background: currentTheme.glass,
+                  position: 'relative'
+                }}
+              >
+                <img 
+                  src={eventProfileImage} 
+                  alt="Celebrant" 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                />
+              </motion.div>
+            )}
             <h3 style={{ fontSize: '2rem', fontWeight: 900, fontFamily: 'Playfair Display, serif', marginBottom: '2rem', color: currentTheme.text }}>The Celebration</h3>
             <div style={{ fontSize: '1.5rem', color: currentTheme.text, opacity: 0.8, fontStyle: 'italic', lineHeight: 1.8 }}>
-              "{event.description}"
+              "{eventDescription}"
             </div>
         </motion.div>
 
@@ -683,20 +887,11 @@ const EventPreview = () => {
                 <input required type="text" placeholder="Enter full name" value={rsvpData.guest_name} onChange={e => setRsvpData({...rsvpData, guest_name: e.target.value})} style={{ width: '100%', padding: '1.25rem', background: 'transparent', border: 'none', borderBottom: `2px solid ${currentTheme.glassBorder}`, color: currentTheme.text, outline: 'none', fontSize: '1.5rem', fontFamily: 'Playfair Display', transition: 'border 0.3s' }} onFocus={(e) => e.target.style.borderColor = accentColor} onBlur={(e) => e.target.style.borderColor = currentTheme.glassBorder} />
               </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 800, fontSize: '0.875rem', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.1em', color: accentColor }}>Party Size</label>
-                  <select value={rsvpData.guest_count} onChange={e => setRsvpData({...rsvpData, guest_count: parseInt(e.target.value)})} style={{ width: '100%', padding: '1.25rem', background: 'transparent', border: 'none', borderBottom: `2px solid ${currentTheme.glassBorder}`, color: currentTheme.text, outline: 'none', fontSize: '1.5rem', fontFamily: 'Playfair Display', transition: 'border 0.3s', cursor: 'pointer' }}>
-                    {[1,2,3,4,5].map(n => <option key={n} value={n} style={{ background: currentTheme.bg }}>{n} Guest{n>1?'s':''}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 800, fontSize: '0.875rem', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.1em', color: accentColor }}>Attendance</label>
-                  <select value={rsvpData.status} onChange={e => setRsvpData({...rsvpData, status: e.target.value})} style={{ width: '100%', padding: '1.25rem', background: 'transparent', border: 'none', borderBottom: `2px solid ${currentTheme.glassBorder}`, color: currentTheme.text, outline: 'none', fontSize: '1.5rem', fontFamily: 'Playfair Display', transition: 'border 0.3s', cursor: 'pointer' }}>
-                    <option value="attending" style={{ background: currentTheme.bg }}>Joyfully Accepts</option>
-                    <option value="declined" style={{ background: currentTheme.bg }}>Regretfully Declines</option>
-                  </select>
-                </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 800, fontSize: '0.875rem', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.1em', color: accentColor }}>Party Size</label>
+                <select value={rsvpData.guest_count} onChange={e => setRsvpData({...rsvpData, guest_count: parseInt(e.target.value)})} style={{ width: '100%', padding: '1.25rem', background: 'transparent', border: 'none', borderBottom: `2px solid ${currentTheme.glassBorder}`, color: currentTheme.text, outline: 'none', fontSize: '1.5rem', fontFamily: 'Playfair Display', transition: 'border 0.3s', cursor: 'pointer' }}>
+                  {[1,2,3,4,5].map(n => <option key={n} value={n} style={{ background: currentTheme.bg }}>{n} Guest{n>1?'s':''}</option>)}
+                </select>
               </div>
 
               <div>
