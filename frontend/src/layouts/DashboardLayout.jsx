@@ -3,11 +3,12 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Heart, Calendar, PlusCircle, Settings, LogOut, Menu, X, 
-  User, Bell, LayoutDashboard, Send
+  User, Bell, LayoutDashboard, Send, Sparkles
 } from 'lucide-react';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useToast } from '../context/ToastContext';
+import Logo from '../components/Logo';
 
 const DashboardLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -45,12 +46,7 @@ const DashboardLayout = () => {
       <div style={{ minHeight: '100vh', background: '#f8fafc', paddingBottom: '80px' }}>
         {/* Mobile Header */}
         <header style={{ background: 'white', padding: '1rem 1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-             <div style={{ width: '32px', height: '32px', background: '#6366f1', color: 'white', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-               
-             </div>
-             <span style={{ fontWeight: 900, fontFamily: 'Outfit', color: '#6366f1', fontSize: '1.125rem' }}>KKDesign</span>
-          </div>
+          <Logo size={28} />
           <button onClick={handleLogout} style={{ color: '#ef4444', background: 'none', border: 'none' }}><LogOut size={20} /></button>
         </header>
 
@@ -94,10 +90,10 @@ const DashboardLayout = () => {
         style={{ background: 'white', borderRight: '1px solid #e2e8f0', padding: '1.5rem 1rem', display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh', zIndex: 50 }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '3rem', padding: '0 0.5rem' }}>
-          <div style={{ width: '40px', height: '40px', background: '#6366f1', color: 'white', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            
-          </div>
-          {isSidebarOpen && <span style={{ fontSize: '1.25rem', fontWeight: 900, fontFamily: 'Outfit', color: '#6366f1' }}>KKDesign</span>}
+          {isSidebarOpen 
+            ? <Logo size={40} />
+            : <div style={{ width: '40px', height: '40px', background: 'linear-gradient(135deg, #6366f1, #a855f7)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 15px rgba(99,102,241,0.3)' }}><span style={{ color: 'white', fontWeight: 900, fontSize: '1.25rem', fontFamily: 'Outfit' }}>K</span></div>
+          }
         </div>
 
         <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

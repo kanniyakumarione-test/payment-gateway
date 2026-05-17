@@ -4,70 +4,7 @@ import { motion, useScroll, useTransform, useSpring, useMotionValue, AnimatePres
 import { Calendar, Clock, MapPin, User, Phone, Heart, Loader2, Music, Gift, Share2, Map as MapIcon, ChevronDown, Star, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
-// Helper for Particles
-const Particles = ({ color }) => {
-  return (
-    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 1, overflow: 'hidden' }}>
-      {[...Array(30)].map((_, i) => (
-        <motion.div
-          key={i}
-          initial={{ y: -100, x: Math.random() * window.innerWidth, rotate: 0, scale: 0 }}
-          animate={{ 
-            y: window.innerHeight + 100, 
-            x: `calc(${Math.random() * 100}vw + ${Math.random() * 200 - 100}px)`,
-            rotate: 360,
-            scale: [0, 1, 0]
-          }}
-          transition={{ 
-            duration: Math.random() * 15 + 10, 
-            repeat: Infinity, 
-            ease: "linear",
-            delay: Math.random() * 10
-          }}
-          style={{ position: 'absolute', opacity: 0.3 }}
-        >
-          <div style={{
-            width: `${Math.random() * 6 + 2}px`,
-            height: `${Math.random() * 6 + 2}px`,
-            borderRadius: '50%',
-            background: color,
-            boxShadow: `0 0 10px ${color}`
-          }} />
-        </motion.div>
-      ))}
-    </div>
-  );
-};
 
-// Ultra-Premium Floating 3D Orbs
-const FloatingOrbs = ({ theme, primary, accent }) => {
-  return (
-    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
-      {[primary, accent, primary, accent].map((color, i) => (
-        <motion.div
-          key={i}
-          animate={{
-            x: ['0vw', '100vw', '0vw'],
-            y: ['0vh', '100vh', '0vh'],
-            scale: [1, 2, 1],
-          }}
-          transition={{ duration: 30 + (i * 10), repeat: Infinity, ease: "linear", repeatType: "reverse" }}
-          style={{
-            position: 'absolute',
-            width: `${Math.random() * 600 + 300}px`,
-            height: `${Math.random() * 600 + 300}px`,
-            borderRadius: '50%',
-            background: `radial-gradient(circle, ${color} 0%, transparent 60%)`,
-            opacity: theme === 'midnight' ? 0.2 : 0.1,
-            filter: 'blur(80px)',
-            left: `${Math.random() * -20}%`,
-            top: `${Math.random() * -20}%`
-          }}
-        />
-      ))}
-    </div>
-  );
-};
 
 const EventPreview = () => {
   const { id } = useParams();
@@ -341,7 +278,6 @@ const EventPreview = () => {
   if (event.password && !isUnlocked) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: currentTheme.bg, color: currentTheme.text, padding: '2rem' }}>
-        <Particles color={primaryColor} />
         <div style={{ background: currentTheme.glass, backdropFilter: 'blur(20px)', padding: '3rem', borderRadius: '2rem', border: `1px solid ${currentTheme.glassBorder}`, textAlign: 'center', maxWidth: '400px', width: '100%', zIndex: 10 }}>
           <div style={{ width: '60px', height: '60px', background: currentTheme.glass, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2rem' }}>
             <span style={{ fontSize: '1.5rem' }}>🔒</span>
@@ -419,84 +355,54 @@ const EventPreview = () => {
   return (
     <div ref={containerRef} style={{ background: currentTheme.bg, color: currentTheme.text, overflowX: 'hidden', overflowY: isOpened ? 'auto' : 'hidden', height: isOpened ? 'auto' : '100vh', perspective: '2000px', minHeight: '100vh', scrollBehavior: 'smooth' }}>
       
-      <FloatingOrbs theme={theme} primary={primaryColor} accent={accentColor} />
 
-      {/* ENVELOPE REVEAL ANIMATION */}
-      <AnimatePresence>
-        {!isOpened && (
+
+      {/* DIGITAL FROST REVEAL OVERLAY */}
+      <AnimatePresence onExitComplete={() => setIsOpened(true)}>
+        {!isOpening && (
           <motion.div
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 1.5, filter: 'blur(20px)' }}
-            transition={{ duration: 1.5, ease: "easeInOut" }}
-            style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `radial-gradient(circle at center, ${currentTheme.glass}, ${currentTheme.bg})` }}
+            key="digital-frost"
+            exit={{ opacity: 0, scale: 1.1, backdropFilter: 'blur(0px)' }}
+            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+            style={{ 
+              position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', 
+              background: `rgba(0,0,0,0.6)`, backdropFilter: 'blur(30px)' 
+            }}
           >
-            {/* The Envelope Container */}
             <motion.div 
-              animate={isOpening ? { y: 100 } : { y: 0 }} // Drop envelope slightly when letter rises
-              transition={{ duration: 1, delay: 0.5 }}
-              style={{ width: 'min(90vw, 500px)', height: 'min(60vw, 320px)', position: 'relative', perspective: '1500px' }}
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -50, opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              style={{ 
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.03))', 
+                border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: '24px', padding: '4rem 3rem', textAlign: 'center',
+                boxShadow: '0 30px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)',
+                maxWidth: '500px', width: '90%',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2.5rem'
+              }}
             >
-              
-              {/* Envelope Back */}
-              <div style={{ position: 'absolute', inset: 0, background: currentTheme.glass, backdropFilter: 'blur(20px)', borderRadius: '12px', border: `1px solid ${currentTheme.glassBorder}`, boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }} />
+               <div>
+                 <div style={{ fontSize: '0.875rem', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.4em', marginBottom: '1rem', fontWeight: 600 }}>Exclusive Invitation</div>
+                 <h2 style={{ fontSize: '2.5rem', color: '#ffffff', fontFamily: 'Playfair Display, serif', fontWeight: 900, lineHeight: 1.2 }}>{event.title}</h2>
+               </div>
 
-              {/* The Letter inside */}
-              <motion.div 
-                initial={{ y: 0 }}
-                animate={isOpening ? { y: -180 } : { y: 0 }}
-                transition={{ duration: 1, delay: 0.6, type: 'spring', bounce: 0.2 }}
-                style={{ 
-                  position: 'absolute', inset: '10px', background: '#fdfbf7', borderRadius: '8px', zIndex: 2, 
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', 
-                  boxShadow: '0 0 30px rgba(0,0,0,0.3)', textAlign: 'center' 
-                }}
-              >
-                 <div style={{ fontSize: '1rem', color: accentColor, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '1rem', fontWeight: 800 }}>You're Invited</div>
-                 <h2 style={{ fontSize: '2rem', color: '#1a1a1a', fontFamily: 'Playfair Display', fontWeight: 900, lineHeight: 1.2, marginBottom: '0.5rem' }}>{event.title}</h2>
-              </motion.div>
-
-              {/* Envelope Front Flaps (Left, Right, Bottom) */}
-              <div style={{ position: 'absolute', inset: 0, zIndex: 3, overflow: 'hidden', borderRadius: '12px' }}>
-                 {/* Left Triangle */}
-                 <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: '50%', background: 'rgba(255,255,255,0.05)', clipPath: 'polygon(0 0, 100% 50%, 0 100%)', borderRight: `1px solid ${currentTheme.glassBorder}` }} />
-                 {/* Right Triangle */}
-                 <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: '50%', background: 'rgba(255,255,255,0.05)', clipPath: 'polygon(100% 0, 0 50%, 100% 100%)', borderLeft: `1px solid ${currentTheme.glassBorder}` }} />
-                 {/* Bottom Triangle */}
-                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '65%', background: 'rgba(255,255,255,0.08)', clipPath: 'polygon(0 100%, 50% 0, 100% 100%)', backdropFilter: 'blur(5px)', borderTop: `1px solid ${currentTheme.glassBorder}` }} />
-              </div>
-
-              {/* Top Flap (Opens up) */}
-              <motion.div
-                initial={{ rotateX: 0, zIndex: 4 }}
-                animate={isOpening ? { rotateX: 180, zIndex: 1 } : { rotateX: 0, zIndex: 4 }}
-                transition={{ duration: 0.6, ease: "easeInOut" }}
-                style={{ 
-                  position: 'absolute', top: 0, left: 0, right: 0, height: '60%', 
-                  background: 'rgba(255,255,255,0.12)', clipPath: 'polygon(0 0, 50% 100%, 100% 0)', 
-                  transformOrigin: 'top', backdropFilter: 'blur(10px)', 
-                  borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px',
-                  borderBottom: `1px solid ${currentTheme.glassBorder}`
-                }}
-              />
-
-              {/* Wax Seal Button */}
-              <motion.button 
-                animate={isOpening ? { scale: 0, opacity: 0 } : { scale: 1, opacity: 1 }}
-                transition={{ duration: 0.4 }}
-                onClick={() => setIsOpening(true)}
-                whileHover={{ scale: 1.1, boxShadow: `0 0 60px ${accentColor}` }}
-                style={{ 
-                  position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 5,
-                  width: '100px', height: '100px', borderRadius: '50%', background: accentColor, 
-                  border: `2px solid ${currentTheme.bg}`, color: currentTheme.bg, fontWeight: 900, cursor: 'pointer', 
-                  fontFamily: 'Playfair Display', fontSize: '1rem', display: 'flex', flexDirection: 'column', 
-                  alignItems: 'center', justifyContent: 'center', outline: 'none', 
-                  boxShadow: `0 10px 20px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,0,0,0.2)`
-                }}
-              >
-                 
-                 <span style={{ letterSpacing: '0.1em', fontSize: '0.75rem' }}>OPEN</span>
-              </motion.button>
+               <motion.button 
+                 onClick={() => setIsOpening(true)}
+                 whileHover={{ scale: 1.05, background: 'rgba(255,255,255,0.2)' }}
+                 whileTap={{ scale: 0.95 }}
+                 style={{ 
+                   padding: '1rem 3rem', borderRadius: '100px', 
+                   background: 'rgba(255,255,255,0.1)', 
+                   border: '1px solid rgba(255,255,255,0.3)', 
+                   color: '#ffffff', fontWeight: 700, letterSpacing: '0.1em', cursor: 'pointer', 
+                   outline: 'none', transition: 'background 0.3s ease',
+                   boxShadow: '0 10px 20px rgba(0,0,0,0.2)'
+                 }}
+               >
+                 ENTER
+               </motion.button>
             </motion.div>
           </motion.div>
         )}
@@ -508,7 +414,6 @@ const EventPreview = () => {
         transition={{ duration: 1.5, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
         style={{ position: 'relative', zIndex: 2 }}
       >
-        <Particles color={primaryColor} />
       
       {/* 1. CINEMATIC HERO SECTION */}
       <section style={{ height: '100vh', width: '100vw', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
@@ -537,18 +442,7 @@ const EventPreview = () => {
             textAlign: 'center'
           }}
         >
-            <motion.div 
-              initial={{ scale: 0, rotate: -180 }}
-              animate={isOpened ? { scale: 1, rotate: 0 } : {}}
-              transition={{ duration: 1.5, delay: 1, type: "spring", bounce: 0.4 }}
-              style={{ width: '100px', height: '100px', background: currentTheme.glass, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2rem', border: `2px solid ${accentColor}`, backdropFilter: 'blur(20px)' }}
-            >
-              <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }}>
-                <span style={{ fontSize: '3.5rem', fontFamily: 'Playfair Display, serif', fontWeight: 900, color: accentColor, lineHeight: 1 }}>
-                  {event.title ? event.title.charAt(0).toUpperCase() : 'E'}
-                </span>
-              </motion.div>
-            </motion.div>
+
 
             <motion.h2 
               initial={{ opacity: 0, y: 20 }}
@@ -571,7 +465,7 @@ const EventPreview = () => {
               textShadow: theme === 'midnight' ? '0 20px 50px rgba(0,0,0,0.5)' : 'none'
             }}>
               {event.title.split(' ').map((word, wordIndex) => (
-                <span key={wordIndex} style={{ display: 'inline-block', marginRight: '1rem' }}>
+                <span key={wordIndex} style={{ display: 'inline-block', marginRight: '1rem', whiteSpace: 'nowrap' }}>
                   {word.split('').map((char, charIndex) => (
                     <motion.span
                       key={charIndex}
