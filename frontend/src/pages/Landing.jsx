@@ -10,6 +10,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 const Landing = () => {
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
 
   React.useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -19,12 +20,10 @@ const Landing = () => {
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        navigate('/dashboard');
-      }
+      setIsLoggedIn(!!user);
     });
     return () => unsubscribe();
-  }, [navigate]);
+  }, []);
 
   return (
     <div style={{ 
@@ -86,7 +85,7 @@ const Landing = () => {
         <motion.button 
           whileHover={{ scale: 1.03, boxShadow: '0 8px 20px rgba(15, 23, 42, 0.15)' }}
           whileTap={{ scale: 0.97 }}
-          onClick={() => navigate('/login')}
+          onClick={() => navigate(isLoggedIn ? '/dashboard' : '/login')}
           style={{ 
             padding: '0.75rem 1.75rem', 
             background: '#0f172a', 
@@ -101,7 +100,7 @@ const Landing = () => {
             transition: 'background-color 0.2s ease'
           }}
         >
-          Get Started
+          {isLoggedIn ? 'Dashboard' : 'Get Started'}
         </motion.button>
       </nav>
 
@@ -187,7 +186,7 @@ const Landing = () => {
                 boxShadow: '0 15px 30px rgba(99, 102, 241, 0.3)' 
               }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => navigate('/login')}
+              onClick={() => navigate(isLoggedIn ? '/dashboard' : '/login')}
               style={{ 
                 padding: '1.25rem 2.75rem', 
                 background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)', 
@@ -203,7 +202,7 @@ const Landing = () => {
                 boxShadow: '0 8px 25px rgba(99, 102, 241, 0.2)'
               }}
             >
-              Start Creating 
+              {isLoggedIn ? 'Go to Dashboard' : 'Start Creating'} 
               <motion.span
                 animate={{ x: [0, 4, 0] }}
                 transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
