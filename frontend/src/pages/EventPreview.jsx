@@ -11,7 +11,9 @@ const EventPreview = () => {
   const { id } = useParams();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(() => {
+    return localStorage.getItem(`unlocked_${id}`) === 'true';
+  });
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -396,6 +398,7 @@ const EventPreview = () => {
             e.preventDefault();
             if (passwordInput === event.password) {
               setIsUnlocked(true);
+              localStorage.setItem(`unlocked_${id}`, 'true');
             } else {
               setPasswordError(true);
             }
