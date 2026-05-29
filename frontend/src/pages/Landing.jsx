@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, Gift, PartyPopper, ChevronRight } from 'lucide-react';
 import Logo from '../components/Logo';
 import FlamesGame from '../components/FlamesGame';
+import { auth } from '../lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -14,6 +16,15 @@ const Landing = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        navigate('/dashboard');
+      }
+    });
+    return () => unsubscribe();
+  }, [navigate]);
 
   return (
     <div style={{ 

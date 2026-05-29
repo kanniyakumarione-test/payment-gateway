@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { auth, googleProvider } from '../lib/firebase';
-import { signInWithPopup } from 'firebase/auth';
+import { signInWithPopup, onAuthStateChanged } from 'firebase/auth';
 import { useToast } from '../context/ToastContext';
 import Logo from '../components/Logo';
 
@@ -12,6 +12,15 @@ const Login = () => {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        navigate('/dashboard');
+      }
+    });
+    return () => unsubscribe();
+  }, [navigate]);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
