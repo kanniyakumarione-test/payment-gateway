@@ -33,14 +33,30 @@ const EventPreview = () => {
     offset: ["start start", "end end"]
   });
 
-  // 3D Transforms
-  const cardRotateX = useTransform(scrollYProgress, [0, 0.5], [0, 10]);
-  const cardRotateY = useTransform(scrollYProgress, [0, 0.5], [0, -5]);
-  const cardScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.95]);
+  const cardRotateX = useTransform(scrollYProgress, [0, 0.5], [0, 15]);
+  const cardRotateY = useTransform(scrollYProgress, [0, 0.5], [0, -15]);
+  const cardScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.9]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
   const storyScale = useTransform(scrollYProgress, [0.1, 0.4], [0.8, 1]);
 
+  // Mouse Parallax
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  
+  const mouseRotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [15, -15]), { damping: 30, stiffness: 200 });
+  const mouseRotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-15, 15]), { damping: 30, stiffness: 200 });
+
+  const handleMouseMove = (e) => {
+    if (!isOpened) return;
+    const { innerWidth, innerHeight } = window;
+    const x = (e.clientX / innerWidth) - 0.5;
+    const y = (e.clientY / innerHeight) - 0.5;
+    mouseX.set(x);
+    mouseY.set(y);
+  };
+
   useEffect(() => {
+
     const fetchEvent = async () => {
       try {
         const { data, error } = await supabase
@@ -539,8 +555,56 @@ const EventPreview = () => {
   const venueInfo = event ? getVenueDetails(event.venue) : { address: '', mapUrl: '' };
 
   return (
-    <div ref={containerRef} style={{ background: currentTheme.bg, color: currentTheme.text, overflowX: 'hidden', overflowY: isOpened ? 'auto' : 'hidden', height: isOpened ? 'auto' : '100vh', perspective: '2000px', minHeight: '100vh', scrollBehavior: 'smooth' }}>
+    <div 
+      ref={containerRef} 
+      onMouseMove={handleMouseMove}
+      style={{ 
+        background: currentTheme.bg, 
+        color: currentTheme.text, 
+        overflowX: 'hidden', 
+        overflowY: isOpened ? 'auto' : 'hidden', 
+        height: isOpened ? 'auto' : '100vh', 
+        perspective: '2000px', 
+        minHeight: '100vh', 
+        scrollBehavior: 'smooth' 
+      }}
+    >
       
+      {/* 3D Floating Particles Background */}
+      {isOpened && (
+        <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 1, overflow: 'hidden' }}>
+          {[...Array(20)].map((_, i) => (
+            <motion.div
+              key={i}
+              initial={{ 
+                x: Math.random() * window.innerWidth, 
+                y: window.innerHeight + 100,
+                opacity: Math.random() * 0.5 + 0.2,
+                scale: Math.random() * 0.5 + 0.5
+              }}
+              animate={{ 
+                y: -100,
+                rotate: Math.random() * 360,
+              }}
+              transition={{ 
+                duration: Math.random() * 10 + 15,
+                repeat: Infinity,
+                ease: "linear",
+                delay: Math.random() * 10
+              }}
+              style={{
+                position: 'absolute',
+                width: `${Math.random() * 10 + 5}px`,
+                height: `${Math.random() * 10 + 5}px`,
+                background: accentColor,
+                borderRadius: '50%',
+                boxShadow: `0 0 20px ${accentColor}`,
+                filter: 'blur(2px)'
+              }}
+            />
+          ))}
+        </div>
+      )}
 
 
       {/* DIGITAL FROST REVEAL OVERLAY */}
@@ -598,11 +662,25 @@ const EventPreview = () => {
         initial={{ scale: 0.8, opacity: 0, y: 100 }}
         animate={{ scale: isOpened ? 1 : 0.8, opacity: isOpened ? 1 : 0, y: isOpened ? 0 : 100 }}
         transition={{ duration: 1.5, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        style={{ position: 'relative', zIndex: 2 }}
+        style={{ 
+          position: 'relative', 
+          zIndex: 2,
+          rotateX: cardRotateX,
+          rotateY: cardRotateY,
+          scale: cardScale,
+          transformStyle: 'preserve-3d'
+        }}
       >
+        <motion.div style={{
+          rotateX: mouseRotateX,
+          rotateY: mouseRotateY,
+          transformStyle: 'preserve-3d',
+          width: '100%',
+          height: '100%'
+        }}>
       
       {/* 1. CINEMATIC HERO SECTION */}
-      <section style={{ height: '100vh', width: '100vw', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      <motion.section style={{ height: '100vh', width: '100vw', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', opacity: heroOpacity }}>
         <motion.div 
           style={{
             position: 'absolute',
@@ -700,8 +778,9 @@ const EventPreview = () => {
               </motion.div>
             )}
         </motion.div>
-      </section>
+      </motion.section>
 
+      <motion.div style={{ scale: storyScale }}>
       {/* 2. DESCRIPTION & DETAILS (Immersive Cards) */}
       <section style={{ padding: '5rem 5% 10rem', position: 'relative', zIndex: 12 }}>
         <motion.div 
@@ -1012,6 +1091,8 @@ const EventPreview = () => {
       </footer>
 
       <div style={{ position: 'fixed', inset: '1rem', border: `1px solid ${currentTheme.glassBorder}`, borderRadius: '2rem', pointerEvents: 'none', zIndex: 100 }} />
+      </motion.div>
+      </motion.div>
       </motion.div>
     </div>
   );
