@@ -485,6 +485,24 @@ const Landing = () => {
         }}>
           © 2026 KKDesign Platform. All celebrations managed.
         </p>
+        <a href="https://softgenz.kanniyakumarione.com" target="_blank" rel="noopener noreferrer" style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.4rem',
+          marginTop: '1.5rem',
+          padding: '0.5rem 1rem',
+          background: 'rgba(99, 102, 241, 0.05)',
+          border: '1px solid rgba(99, 102, 241, 0.1)',
+          borderRadius: '100px',
+          fontSize: '0.75rem',
+          fontWeight: 700,
+          color: '#64748b',
+          textDecoration: 'none',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em'
+        }}>
+          Digital Experience by <span style={{ color: '#6366f1' }}>SoftGenz</span>
+        </a>
       </footer>
     </div>
   );
